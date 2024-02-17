@@ -99,9 +99,12 @@ function update()
     * y del conjunto pentagonal sobre el objeto importado
     *******************/
     angulo += 0.01;
-    scene.children.forEach(child => {
-        child.rotation.y = angulo;
-    });
+    let cont = 0;
+    for(let children of scene.children){
+        if(cont!=0){
+            children.rotation.y = angulo;
+        }
+    }
 }
 
 function render()
