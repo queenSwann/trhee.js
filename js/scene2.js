@@ -23,7 +23,7 @@ let renderer, scene, camera;
 /*******************
  * TO DO: Variables globales de la aplicacion
  *******************/
-let esferaCubo;
+let objetos;
 let angulo = 0;
 
 
@@ -66,13 +66,17 @@ function loadScene()
     * TO DO: Construir una escena con 5 figuras diferentes posicionadas
     * en los cinco vertices de un pentagono regular alredor del origen
     *******************/
+    objetos = new THREE.Object3D();
+    scene.add(objetos)
     const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
     for (let i = 0; i < 5; i++) {
         const cube = new THREE.Mesh(geometry, material);
         const angle = (i / 5) * Math.PI * 2;
         cube.position.set(Math.cos(angle) * 2, 0, Math.sin(angle) * 2);
-        scene.add(cube);
+        objetos.add(cube);
     }
+
+    
 
     /*******************
     * TO DO: Añadir a la escena un modelo importado en el centro del pentagono
@@ -99,12 +103,7 @@ function update()
     * y del conjunto pentagonal sobre el objeto importado
     *******************/
     angulo += 0.01;
-    let cont = 0;
-    for(let children of scene.children){
-        if(cont!=0){
-            children.rotation.y = angulo;
-        }
-    }
+    objetos.rotation.y = angulo
 }
 
 function render()
