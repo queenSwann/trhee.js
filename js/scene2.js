@@ -69,13 +69,34 @@ function loadScene()
     objetos = new THREE.Object3D();
     scene.add(objetos)
 
+    let i = 0;
     const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-    for (let i = 0; i < 5; i++) {
-        const cube = new THREE.Mesh(geometry, material);
-        const angle = (i / 5) * Math.PI * 2;
-        cube.position.set(Math.cos(angle) * 2, 0, Math.sin(angle) * 2);
-        objetos.add(cube);
-    }
+    const cube = new THREE.Mesh(geometry, material);
+    const angle = (i / 5) * Math.PI * 2;
+    cube.position.set(Math.cos(angle) * 2, 0, Math.sin(angle) * 2);
+    objetos.add(cube);
+    i++;
+
+    const geometry1 = new THREE.SphereGeometry(0.5, 0.5, 0.5);
+    const cube1 = new THREE.Mesh(geometry1, material);
+    const angle1 = (i / 5) * Math.PI * 2;
+    cube1.position.set(Math.cos(angle1) * 2, 0, Math.sin(angle1) * 2);
+    objetos.add(cube1);
+    i++;
+
+    const geometry2 = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+    const cube2 = new THREE.Mesh(geometry2, material);
+    const angle2 = (i / 5) * Math.PI * 2;
+    cube2.position.set(Math.cos(angle2) * 2, 0, Math.sin(angle2) * 2);
+    objetos.add(cube2);
+    i++;
+
+    const geometry3 = new THREE.SphereGeometry(0.5, 0.5, 0.5);
+    const cube3 = new THREE.Mesh(geometry3, material);
+    const angle3 = (i / 5) * Math.PI * 2;
+    cube3.position.set(Math.cos(angle3) * 2, 0, Math.sin(angle3) * 2);
+    objetos.add(cube3);
+    i++;
 
     
 
