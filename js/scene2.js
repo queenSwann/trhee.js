@@ -53,7 +53,7 @@ function init()
 
 function loadScene()
 {
-    const material = new THREE.MeshNormalMaterial( );
+    const material = new THREE.MeshNormalMaterial({ color: 'yellow', wireframe: true });
 
     /*******************
     * TO DO: Construir un suelo en el plano XZ
@@ -68,13 +68,41 @@ function loadScene()
     *******************/
     objetos = new THREE.Object3D();
     scene.add(objetos)
-    const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-    for (let i = 0; i < 5; i++) {
-        const cube = new THREE.Mesh(geometry, material);
-        const angle = (i / 5) * Math.PI * 2;
-        cube.position.set(Math.cos(angle) * 2, 0, Math.sin(angle) * 2);
-        objetos.add(cube);
-    }
+
+    //FIGURA 1
+    let geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+    let figura = new THREE.Mesh(geometry, material);
+    let angle = (i / 5) * Math.PI * 2;
+    figura.position.set(Math.cos(angle) * 2, 0, Math.sin(angle) * 2);
+    objetos.add(figura);
+
+    //FIGURA 2
+    geometry = new THREE.RingGeometry(0.5, 0.5, 0.5);
+    figura = new THREE.Mesh(geometry, material);
+    angle = (i / 5) * Math.PI * 2;
+    figura.position.set(Math.cos(angle) * 2, 0, Math.sin(angle) * 2);
+    objetos.add(figura);
+
+    //FIGURA 3
+    geometry = new THREE.CapsuleGeometry(0.5, 0.5, 0.5);
+    figura = new THREE.Mesh(geometry, material);
+    angle = (i / 5) * Math.PI * 2;
+    figura.position.set(Math.cos(angle) * 2, 0, Math.sin(angle) * 2);
+    objetos.add(figura);
+
+    //FIGURA 4
+    geometry = new THREE.ConeGeometry(0.5, 0.5, 0.5);
+    figura = new THREE.Mesh(geometry, material);
+    angle = (i / 5) * Math.PI * 2;
+    figura.position.set(Math.cos(angle) * 2, 0, Math.sin(angle) * 2);
+    objetos.add(figura);
+
+    //FIGURA 5
+    geometry = new THREE.TubeGeometry(0.5, 0.5, 0.5);
+    figura = new THREE.Mesh(geometry, material);
+    angle = (i / 5) * Math.PI * 2;
+    figura.position.set(Math.cos(angle) * 2, 0, Math.sin(angle) * 2);
+    objetos.add(figura);
 
     
 
