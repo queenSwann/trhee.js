@@ -70,39 +70,39 @@ function loadScene()
     scene.add(objetos)
 
     //FIGURA 1
-    let geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
-    let figura = new THREE.Mesh(geometry, material);
-    let angle = (i / 5) * Math.PI * 2;
-    figura.position.set(Math.cos(angle) * 2, 0, Math.sin(angle) * 2);
-    objetos.add(figura);
+    let geometry1 = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+    let figura1 = new THREE.Mesh(geometry1, material);
+    let angle1 = (0 / 5) * Math.PI * 2;
+    figura1.position.set(Math.cos(angle1) * 2, 0, Math.sin(angle1) * 2);
+    objetos.add(figura1);
 
     //FIGURA 2
-    geometry = new THREE.RingGeometry(0.5, 0.5, 0.5);
-    figura = new THREE.Mesh(geometry, material);
-    angle = (i / 5) * Math.PI * 2;
-    figura.position.set(Math.cos(angle) * 2, 0, Math.sin(angle) * 2);
-    objetos.add(figura);
+    let geometry2 = new THREE.RingGeometry(0.5, 0.5, 0.5);
+    let figura2 = new THREE.Mesh(geometry2, material);
+    let angle2 = (1 / 5) * Math.PI * 2;
+    figura2.position.set(Math.cos(angle2) * 2, 0, Math.sin(angle2) * 2);
+    objetos.add(figura2);
 
     //FIGURA 3
-    geometry = new THREE.CapsuleGeometry(0.5, 0.5, 0.5);
-    figura = new THREE.Mesh(geometry, material);
-    angle = (i / 5) * Math.PI * 2;
-    figura.position.set(Math.cos(angle) * 2, 0, Math.sin(angle) * 2);
-    objetos.add(figura);
+    let geometry3 = new THREE.CapsuleGeometry(0.5, 0.5, 0.5);
+    let figura3 = new THREE.Mesh(geometry3, material);
+    let angle3 = (2 / 5) * Math.PI * 2;
+    figura3.position.set(Math.cos(angle3) * 2, 0, Math.sin(angle3) * 2);
+    objetos.add(figura3);
 
     //FIGURA 4
-    geometry = new THREE.ConeGeometry(0.5, 0.5, 0.5);
-    figura = new THREE.Mesh(geometry, material);
-    angle = (i / 5) * Math.PI * 2;
-    figura.position.set(Math.cos(angle) * 2, 0, Math.sin(angle) * 2);
-    objetos.add(figura);
+    let geometry4 = new THREE.ConeGeometry(0.5, 0.5, 0.5);
+    let figura4 = new THREE.Mesh(geometry4, material);
+    let angle4 = (3 / 5) * Math.PI * 2;
+    figura4.position.set(Math.cos(angle4) * 2, 0, Math.sin(angle4) * 2);
+    objetos.add(figura4);
 
     //FIGURA 5
-    geometry = new THREE.TubeGeometry(0.5, 0.5, 0.5);
-    figura = new THREE.Mesh(geometry, material);
-    angle = (i / 5) * Math.PI * 2;
-    figura.position.set(Math.cos(angle) * 2, 0, Math.sin(angle) * 2);
-    objetos.add(figura);
+    let geometry5 = new THREE.TubeGeometry(0.5, 0.5, 0.5);
+    let figura5 = new THREE.Mesh(geometry5, material);
+    let angle5 = (4 / 5) * Math.PI * 2;
+    figura5.position.set(Math.cos(angle5) * 2, 0, Math.sin(angle5) * 2);
+    objetos.add(figura5);
 
     
 
