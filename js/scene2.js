@@ -74,8 +74,7 @@ function loadScene()
     const cube = new THREE.Mesh(geometry, material);
     for (let i = 0; i < 5; i++) {
         const angle = (i / 5) * Math.PI * 2;
-        cube.position.set(Math.cos(angle) * 2, 0, Math.sin(angle) * 2);
-        cube.position.y = 1
+        cube.position.set(Math.cos(angle) * 2, 1, Math.sin(angle) * 2);
         objetos.add(cube);
     }
 
