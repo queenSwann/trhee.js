@@ -108,7 +108,7 @@ function update()
     * TO DO: Modificar el angulo de giro de cada objeto sobre si mismo
     * y del conjunto pentagonal sobre el objeto importado
     *******************/
-    angulo += 0.01;
+    angulo += 0.1;
     objetos.rotation.y = angulo
     robot.rotation.y = angulo
 
