@@ -75,6 +75,7 @@ function loadScene()
     for (let i = 0; i < 5; i++) {
         const angle = (i / 5) * Math.PI * 2;
         cube.position.set(Math.cos(angle) * 2, 0, Math.sin(angle) * 2);
+        cube.position.y = 1
         objetos.add(cube);
     }
 
