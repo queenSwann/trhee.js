@@ -53,12 +53,13 @@ function init()
 
 function loadScene()
 {
+    const floorMaterial = new THREE.MeshNormalMaterial({ color: 'blue', wireframe: false });
     const material = new THREE.MeshNormalMaterial({ color: 'yellow', wireframe: true });
 
     /*******************
     * TO DO: Construir un suelo en el plano XZ
     *******************/
-    const suelo = new THREE.Mesh( new THREE.PlaneGeometry(10,10, 10,10), material );
+    const suelo = new THREE.Mesh( new THREE.PlaneGeometry(10,10, 10,10), floorMaterial );
     suelo.rotation.x = -Math.PI / 2;
     scene.add(suelo);
 
