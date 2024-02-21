@@ -54,13 +54,12 @@ function init()
 
 function loadScene()
 {
-    const floorMaterial = new THREE.MeshNormalMaterial({ color: 'blue', wireframe: false });
     const material = new THREE.MeshNormalMaterial({ color: 'yellow', wireframe: true });
 
     /*******************
     * TO DO: Construir un suelo en el plano XZ
     *******************/
-    const suelo = new THREE.Mesh( new THREE.PlaneGeometry(10,10, 10,10), floorMaterial );
+    const suelo = new THREE.Mesh( new THREE.PlaneGeometry(10,10, 10,10), material );
     suelo.rotation.x = -Math.PI / 2;
     scene.add(suelo);
 
@@ -71,9 +70,9 @@ function loadScene()
     objetos = new THREE.Object3D();
     scene.add(objetos)
 
-    const geometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
+    const geometry = new THREE.BoxGeometry(2,2,2);
+    const cube = new THREE.Mesh(geometry, material);
     for (let i = 0; i < 5; i++) {
-        const cube = new THREE.Mesh(geometry, material);
         const angle = (i / 5) * Math.PI * 2;
         cube.position.set(Math.cos(angle) * 2, 0, Math.sin(angle) * 2);
         objetos.add(cube);
@@ -85,18 +84,33 @@ function loadScene()
     * TO DO: Añadir a la escena un modelo importado en el centro del pentagono
     *******************/
     const loader = new THREE.ObjectLoader();
+
     loader.load( 'models/soldado/soldado.json', 
         function(objeto){
-            cubo.add(objeto);
+            cube.add(objeto);
             objeto.position.y = 1;
         }
     )
+    const glloader = new GLTFLoader();
+
+    glloader.load( 'models/RobotExpressive.glb', function ( gltf ) {
+    //glloader.load( 'models/robota/scene.gltf', function ( gltf ) {
+        gltf.scene.position.y = 1;
+        gltf.scene.rotation.y = -Math.PI/2;
+        cube.add( gltf.scene );
+        console.log("ROBOT");
+        console.log(gltf);
+    
+    }, undefined, function ( error ) {
+    
+        console.error( error );
+    
+    } );
 
     /*******************
     * TO DO: Añadir a la escena unos ejes
     *******************/
-    const axesHelper = new THREE.AxesHelper(5);
-    scene.add(axesHelper);
+    scene.add( new THREE.AxesHelper(3) );
 }
 
 function update()
