@@ -24,6 +24,7 @@ let renderer, scene, camera;
  *******************/
 let objetos;
 let angulo = 0;
+let robot;
 
 
 // Acciones
@@ -54,11 +55,12 @@ function init()
 function loadScene()
 {
     const material = new THREE.MeshNormalMaterial({ color: 'yellow', wireframe: false });
+    const sueloMaterial = new THREE.MeshBasicMaterial({ color: 0x474133 });
 
     /*******************
     * TO DO: Construir un suelo en el plano XZ
     *******************/
-    const suelo = new THREE.Mesh( new THREE.PlaneGeometry(10,10, 10,10), material );
+    const suelo = new THREE.Mesh( new THREE.PlaneGeometry(10,10, 10,10), sueloMaterial );
     suelo.rotation.x = -Math.PI / 2;
     scene.add(suelo);
 
@@ -69,11 +71,11 @@ function loadScene()
     objetos = new THREE.Object3D();
     scene.add(objetos)
 
-    const geometries = [new THREE.BoxGeometry(1,1,1),new THREE.BoxGeometry(1,1,1),new THREE.BoxGeometry(1,1,1),new THREE.BoxGeometry(1,1,1),new THREE.BoxGeometry(1,1,1)];
+    const geometries = [new THREE.BoxGeometry(1,1,1),new THREE.ConeGeometry(0.5, 1),new THREE.TorusGeometry(0.5,0.2),new THREE.LatheGeometry(),new THREE.CapsuleGeometry(0.5)];
     for (let i = 0; i < 5; i++) {
         const cube = new THREE.Mesh(geometries[i], material);
         const angle = (i / 5) * Math.PI * 2;
-        cube.position.set(Math.cos(angle) * 2, 0.5, Math.sin(angle) * 2);
+        cube.position.set(Math.cos(angle) * 2, 1, Math.sin(angle) * 2);
         objetos.add(cube);
     }
 
@@ -86,6 +88,7 @@ function loadScene()
 
     loader.load( 'models/soldado/soldado.json', 
         function(objeto){
+            robot = objeto;
             suelo.add(objeto);
             objeto.position.set(0, 0, 0);
             objeto.rotation.x = Math.PI / 2;
@@ -107,6 +110,8 @@ function update()
     *******************/
     angulo += 0.01;
     objetos.rotation.y = angulo
+    robot.rotation.y = angulo
+
 }
 
 function render()
