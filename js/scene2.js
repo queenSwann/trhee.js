@@ -95,11 +95,9 @@ function loadScene()
 
     glloader.load( 'models/RobotExpressive.glb', function ( gltf ) {
     //glloader.load( 'models/robota/scene.gltf', function ( gltf ) {
-        gltf.scene.position.y = 1;
+        gltf.scene.position.y = 0;
         gltf.scene.rotation.y = -Math.PI/2;
-        cube.add( gltf.scene );
-        console.log("ROBOT");
-        console.log(gltf);
+        scene.add( gltf.scene );
     
     }, undefined, function ( error ) {
     
