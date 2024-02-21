@@ -14,7 +14,6 @@
  * TO DO: Cargar los modulos necesarios
  *******************/
 import * as THREE from "../lib/three.module.js";
-import {GLTFLoader} from "../lib/GLTFLoader.module.js";
 
 // Variables de consenso
 let renderer, scene, camera;
@@ -54,7 +53,7 @@ function init()
 
 function loadScene()
 {
-    const material = new THREE.MeshNormalMaterial({ color: 'yellow', wireframe: true });
+    const material = new THREE.MeshNormalMaterial({ color: 'yellow', wireframe: false });
 
     /*******************
     * TO DO: Construir un suelo en el plano XZ
@@ -70,11 +69,11 @@ function loadScene()
     objetos = new THREE.Object3D();
     scene.add(objetos)
 
-    const geometry = new THREE.BoxGeometry(2,2,2);
+    const geometries = [new THREE.BoxGeometry(1,1,1),new THREE.BoxGeometry(1,1,1),new THREE.BoxGeometry(1,1,1),new THREE.BoxGeometry(1,1,1),new THREE.BoxGeometry(1,1,1)];
     for (let i = 0; i < 5; i++) {
-        const cube = new THREE.Mesh(geometry, material);
+        const cube = new THREE.Mesh(geometries[i], material);
         const angle = (i / 5) * Math.PI * 2;
-        cube.position.set(Math.cos(angle) * 2, 0, Math.sin(angle) * 2);
+        cube.position.set(Math.cos(angle) * 2, 0.5, Math.sin(angle) * 2);
         objetos.add(cube);
     }
 
@@ -88,14 +87,16 @@ function loadScene()
     loader.load( 'models/soldado/soldado.json', 
         function(objeto){
             suelo.add(objeto);
-            objeto.position.y = 1;
+            objeto.position.set(0, 0, 0);
+            objeto.rotation.x = Math.PI / 2;
+            objeto.rotation.y = Math.PI / 2;
         }
     )
 
     /*******************
     * TO DO: Añadir a la escena unos ejes
     *******************/
-    scene.add( new THREE.AxesHelper(3) );
+    suelo.add( new THREE.AxesHelper(3) );
 }
 
 function update()
