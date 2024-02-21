@@ -87,23 +87,10 @@ function loadScene()
 
     loader.load( 'models/soldado/soldado.json', 
         function(objeto){
-            cube.add(objeto);
+            suelo.add(objeto);
             objeto.position.y = 1;
         }
     )
-    const glloader = new GLTFLoader();
-
-    glloader.load( 'models/RobotExpressive.glb', function ( gltf ) {
-    //glloader.load( 'models/robota/scene.gltf', function ( gltf ) {
-        gltf.scene.position.y = 0;
-        gltf.scene.rotation.y = -Math.PI/2;
-        scene.add( gltf.scene );
-    
-    }, undefined, function ( error ) {
-    
-        console.error( error );
-    
-    } );
 
     /*******************
     * TO DO: Añadir a la escena unos ejes
