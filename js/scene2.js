@@ -54,6 +54,7 @@ function init()
 
 function loadScene()
 {
+    const material = new THREE.MeshNormalMaterial({ color: 'blue', wireframe: false });
     const materialFloor = new THREE.MeshNormalMaterial({ color: 'yellow', wireframe: true });
 
     /*******************
