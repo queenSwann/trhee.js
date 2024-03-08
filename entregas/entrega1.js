@@ -8,8 +8,8 @@
  */
 
 import * as THREE from "../lib/three.module.js";
-import {OrbitControls} from "../lib/OrbitControls.module.js";
-import {TWEEN} from "../lib/tween.module.min.js";
+import { OrbitControls } from "../lib/OrbitControls.module.js";
+import { TWEEN } from "../lib/tween.module.min.js";
 
 // Variables de consenso
 let renderer, scene, camera;
@@ -23,13 +23,14 @@ let cameraControls, effectController;
 let whiteNames = ['w_peon1', 'w_peon2', 'w_peon3', 'w_peon4', 'w_peon5', 'w_peon6', 'w_peon7', 'w_peon8', 'w_alfil1', 'w_alfil2', 'w_tower1', 'w_tower2', 'w_caballo1', 'w_caballo2', 'w_reina', 'w_rey'];
 let blackNames = ['b_peon1', 'b_peon2', 'b_peon3', 'b_peon4', 'b_peon5', 'b_peon6', 'b_peon7', 'b_peon8', 'b_alfil1', 'b_alfil2', 'b_tower1', 'b_tower2', 'b_caballo1', 'b_caballo2', 'b_reina', 'b_rey'];
 let casillas = [];
+let fichaSeleccionada;
+let casillasPosibles = [];
 // Acciones
 init();
 loadScene();
 render();
 
-function init()
-{
+function init() {
     // Motor de render
     renderer = new THREE.WebGLRenderer();
     const container = document.getElementById('container');
@@ -38,38 +39,38 @@ function init()
     renderer.antialias = true;
     renderer.shadowMap.enabled = true;
 
-    container.appendChild( renderer.domElement );
+    container.appendChild(renderer.domElement);
 
     // Escena
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0.5,0.5,0.5);
-    
+    scene.background = new THREE.Color(0.5, 0.5, 0.5);
+
     // Camara
-    camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1,1000);
-    camera.position.set( 4, 3, 6 );
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(4, 3, 6);
     /*******************
     * TO DO: Añadir manejador de camara (OrbitControls)
     *******************/
-    cameraControls = new OrbitControls( camera, renderer.domElement );
-    cameraControls.target.set(0,1,0);
-    camera.lookAt( new THREE.Vector3(0,1,0) );
+    cameraControls = new OrbitControls(camera, renderer.domElement);
+    cameraControls.target.set(0, 1, 0);
+    camera.lookAt(new THREE.Vector3(0, 1, 0));
 
-     // Luces
+    // Luces
     const ambiental = new THREE.AmbientLight(0x222222);
     scene.add(ambiental);
-    const direccional = new THREE.DirectionalLight(0xFFFFFF,0.3);
-    direccional.position.set(-1,1,-1);
+    const direccional = new THREE.DirectionalLight(0xFFFFFF, 0.3);
+    direccional.position.set(-1, 1, -1);
     direccional.castShadow = true;
     scene.add(direccional);
-    const puntual = new THREE.PointLight(0xFFFFFF,0.5);
-    puntual.position.set(2,7,-4);
+    const puntual = new THREE.PointLight(0xFFFFFF, 0.5);
+    puntual.position.set(2, 7, -4);
     scene.add(puntual);
-    const focal = new THREE.SpotLight(0xFFFFFF,0.3);
-    focal.position.set(-2,7,4);
-    focal.target.position.set(0,0,0);
-    focal.angle= Math.PI/7;
+    const focal = new THREE.SpotLight(0xFFFFFF, 0.3);
+    focal.position.set(-2, 7, 4);
+    focal.target.position.set(0, 0, 0);
+    focal.angle = Math.PI / 7;
     focal.penumbra = 0.3;
-    focal.castShadow= true;
+    focal.castShadow = true;
     focal.shadow.camera.far = 20;
     focal.shadow.camera.fov = 80;
     scene.add(focal);
@@ -95,32 +96,31 @@ function init()
 
     // Añadir el plano con la textura del gradiente a la escena
     scene.add(gradientMesh);
-    renderer.domElement.addEventListener('dblclick', animate );
-    
-    renderer.domElement.addEventListener('click', selectPossition );
+    renderer.domElement.addEventListener('dblclick', animate);
+
+    renderer.domElement.addEventListener('click', selectPossition);
 }
 
-function loadScene()
-{
+function loadScene() {
     /*******************
     * TO DO: Misma escena que en la practica anterior
     *******************/
     const textureLoader = new THREE.TextureLoader();
     const gradientTexture = textureLoader.load('entregas/scene_e1/concrete.jpg');
-    let material =  new THREE.MeshStandardMaterial({
+    let material = new THREE.MeshStandardMaterial({
         map: gradientTexture, // Tu textura
         roughness: 0.7, // Ajusta la rugosidad según tus necesidades
         metalness: 0 // Ajusta la metalicidad según tus necesidades
     });
-    let materialWhite = new THREE.MeshPhongMaterial({color:'white', specular:'#f0f0f0', shininess: 20});
-    let materialBlack = new THREE.MeshPhongMaterial({color:'black', specular:'#f0f0f0', shininess: 20});
+    let materialWhite = new THREE.MeshPhongMaterial({ color: 'white', specular: '#f0f0f0', shininess: 20 });
+    let materialBlack = new THREE.MeshPhongMaterial({ color: 'black', specular: '#f0f0f0', shininess: 20 });
 
 
 
     const loader = new THREE.CubeTextureLoader();
-    const cubemap = loader.load([ "entregas/scene_e1/posx.jpg", "entregas/scene_e1/negx.jpg",
-       "entregas/scene_e1/posy.jpg", "entregas/scene_e1/negy.jpg",
-       "entregas/scene_e1/posz.jpg", "entregas/scene_e1/negz.jpg"]);
+    const cubemap = loader.load(["entregas/scene_e1/posx.jpg", "entregas/scene_e1/negx.jpg",
+        "entregas/scene_e1/posy.jpg", "entregas/scene_e1/negy.jpg",
+        "entregas/scene_e1/posz.jpg", "entregas/scene_e1/negz.jpg"]);
     // scene.background = cubemap;
 
 
@@ -131,42 +131,40 @@ function loadScene()
     const fichasNegras = loadBlack();
     scene.add(mesa)
     scene.add(tablero)
-    fichasBlancas.forEach((e)=>scene.add(e))
-    fichasNegras.forEach((e)=>scene.add(e))
-
-    console.log(scene)
+    fichasBlancas.forEach((e) => scene.add(e))
+    fichasNegras.forEach((e) => scene.add(e))
 }
 
-function loadMesa(material){
+function loadMesa(material) {
     const mesa = new THREE.Object3D();
 
-    const geoTabla = new THREE.BoxGeometry(5,0.3,5)
+    const geoTabla = new THREE.BoxGeometry(5, 0.3, 5)
     const tabla = new THREE.Mesh(geoTabla, material);
     tabla.position.y = 3
     mesa.add(tabla);
 
-    const geoPata1 = new THREE.BoxGeometry(0.3,4,0.3)
+    const geoPata1 = new THREE.BoxGeometry(0.3, 4, 0.3)
     const pata1 = new THREE.Mesh(geoPata1, material);
     pata1.position.x = 2
     pata1.position.z = 2
     pata1.position.y = 1
     mesa.add(pata1);
 
-    const geoPata2 = new THREE.BoxGeometry(0.3,4,0.3)
+    const geoPata2 = new THREE.BoxGeometry(0.3, 4, 0.3)
     const pata2 = new THREE.Mesh(geoPata2, material);
     pata2.position.x = 2
     pata2.position.z = -2
     pata2.position.y = 1
     mesa.add(pata2);
 
-    const geoPata3 = new THREE.BoxGeometry(0.3,4,0.3)
+    const geoPata3 = new THREE.BoxGeometry(0.3, 4, 0.3)
     const pata3 = new THREE.Mesh(geoPata3, material);
     pata3.position.x = -2
     pata3.position.z = -2
     pata3.position.y = 1
     mesa.add(pata3);
 
-    const geoPata4 = new THREE.BoxGeometry(0.3,4,0.3)
+    const geoPata4 = new THREE.BoxGeometry(0.3, 4, 0.3)
     const pata4 = new THREE.Mesh(geoPata4, material);
     pata4.position.x = -2
     pata4.position.z = 2
@@ -175,23 +173,26 @@ function loadMesa(material){
     return mesa;
 }
 
-function loadTablero(material, white, black){
+function loadTablero(material, white, black) {
     let colors = [white, black];
     const tablero = new THREE.Object3D();
 
-    const geoTabla = new THREE.BoxGeometry(3.4,0.1,3.4)
+    const geoTabla = new THREE.BoxGeometry(3.4, 0.1, 3.4)
     const tabla = new THREE.Mesh(geoTabla, material);
     tabla.position.y = 3.2
     tablero.add(tabla);
-    for(let i = 0; i<8 ; i++){
-        for(let j = 0; j < 8; j++){
-            const geoCasilla = new THREE.BoxGeometry(0.425,0.05,0.425)
+    for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+            const geoCasilla = new THREE.BoxGeometry(0.425, 0.05, 0.425)
             const casilla = new THREE.Mesh(geoCasilla, colors[(i + j) % 2]);
             casilla.position.y = 3.25
-            casilla.position.x = 1.487-(i*0.425)
-            casilla.position.z = 1.487-(j*0.425)
+            casilla.position.x = 1.487
+            casilla.position.z = 1.487
+            casilla.name = `casilla_m_${i}_${j}`
             casillas.push(casilla.name)
             const casillaObject = new THREE.Object3D();
+            casillaObject.position.x = -(i * 0.425)
+            casillaObject.position.z = -(j * 0.425)
             casillaObject.name = `casilla_${i}_${j}`
             casillaObject.add(casilla);
             tablero.add(casillaObject);
@@ -201,33 +202,33 @@ function loadTablero(material, white, black){
     return tablero;
 }
 
-function loadPeon(material, posX, posY){
+function loadPeon(material, posX, posY) {
     const peon = new THREE.Object3D();
-    peon.position.x = -(posX*0.425)
-    peon.position.z = -(posY*0.425)
+    peon.position.x = -(posX * 0.425)
+    peon.position.z = -(posY * 0.425)
 
-    const geoBase = new THREE.CylinderGeometry(0.08,0.2,0.1)
+    const geoBase = new THREE.CylinderGeometry(0.08, 0.2, 0.1)
     const base = new THREE.Mesh(geoBase, material);
     base.position.x = 1.487
     base.position.z = 1.487
     base.position.y = 3.3
     peon.add(base);
 
-    const geoBody = new THREE.CapsuleGeometry(0.08,0.3,0.5)
+    const geoBody = new THREE.CapsuleGeometry(0.08, 0.3, 0.5)
     const body = new THREE.Mesh(geoBody, material);
     body.position.x = 1.487
     body.position.z = 1.487
     body.position.y = 3.3
     peon.add(body);
 
-    const geoBaseTop = new THREE.CylinderGeometry(0.1,0.1,0.03)
+    const geoBaseTop = new THREE.CylinderGeometry(0.1, 0.1, 0.03)
     const baseTop = new THREE.Mesh(geoBaseTop, material);
     baseTop.position.x = 1.487
     baseTop.position.z = 1.487
     baseTop.position.y = 3.52
     peon.add(baseTop);
 
-    const geoTop = new THREE.SphereGeometry(0.08,50,50)
+    const geoTop = new THREE.SphereGeometry(0.08, 50, 50)
     const top = new THREE.Mesh(geoTop, material);
     top.position.x = 1.487
     top.position.z = 1.487
@@ -237,40 +238,40 @@ function loadPeon(material, posX, posY){
     return peon
 }
 
-function loadAlfil(material, posX, posY){
+function loadAlfil(material, posX, posY) {
     const alfil = new THREE.Object3D();
-    alfil.position.x = -(posX*0.425)
-    alfil.position.z = -(posY*0.425)
+    alfil.position.x = -(posX * 0.425)
+    alfil.position.z = -(posY * 0.425)
 
-    const geoBase = new THREE.CylinderGeometry(0.08,0.2,0.1)
+    const geoBase = new THREE.CylinderGeometry(0.08, 0.2, 0.1)
     const base = new THREE.Mesh(geoBase, material);
     base.position.x = 1.487
     base.position.z = 1.487
     base.position.y = 3.3
     alfil.add(base);
 
-    const geoBody = new THREE.CapsuleGeometry(0.08,0.7,0.5)
+    const geoBody = new THREE.CapsuleGeometry(0.08, 0.7, 0.5)
     const body = new THREE.Mesh(geoBody, material);
     body.position.x = 1.487
     body.position.z = 1.487
     body.position.y = 3.3
     alfil.add(body);
 
-    const geoBaseTop = new THREE.CylinderGeometry(0.1,0.1,0.03)
+    const geoBaseTop = new THREE.CylinderGeometry(0.1, 0.1, 0.03)
     const baseTop = new THREE.Mesh(geoBaseTop, material);
     baseTop.position.x = 1.487
     baseTop.position.z = 1.487
     baseTop.position.y = 3.7
     alfil.add(baseTop);
 
-    const geoTop = new THREE.SphereGeometry(0.07,20,50)
+    const geoTop = new THREE.SphereGeometry(0.07, 20, 50)
     const top = new THREE.Mesh(geoTop, material);
     top.position.x = 1.487
     top.position.z = 1.487
     top.position.y = 3.78
     alfil.add(top);
 
-    const geoTop2 = new THREE.CapsuleGeometry(0.08,0.1,0.5)
+    const geoTop2 = new THREE.CapsuleGeometry(0.08, 0.1, 0.5)
     const top2 = new THREE.Mesh(geoTop2, material);
     top2.position.x = 1.487
     top2.position.z = 1.487
@@ -280,84 +281,84 @@ function loadAlfil(material, posX, posY){
     return alfil
 }
 
-function loadTower(material, posX, posY){
+function loadTower(material, posX, posY) {
     const tower = new THREE.Object3D();
-    tower.position.x = -(posX*0.425)
-    tower.position.z = -(posY*0.425)
+    tower.position.x = -(posX * 0.425)
+    tower.position.z = -(posY * 0.425)
 
-    const geoBase = new THREE.CylinderGeometry(0.08,0.2,0.1)
+    const geoBase = new THREE.CylinderGeometry(0.08, 0.2, 0.1)
     const base = new THREE.Mesh(geoBase, material);
     base.position.x = 1.487
     base.position.z = 1.487
     base.position.y = 3.3
     tower.add(base);
 
-    const geoBody = new THREE.CapsuleGeometry(0.08,0.5,0.5)
+    const geoBody = new THREE.CapsuleGeometry(0.08, 0.5, 0.5)
     const body = new THREE.Mesh(geoBody, material);
     body.position.x = 1.487
     body.position.z = 1.487
     body.position.y = 3.3
     tower.add(body);
 
-    const geoBaseTop = new THREE.CylinderGeometry(0.1,0.1,0.05)
+    const geoBaseTop = new THREE.CylinderGeometry(0.1, 0.1, 0.05)
     const baseTop = new THREE.Mesh(geoBaseTop, material);
     baseTop.position.x = 1.487
     baseTop.position.z = 1.487
     baseTop.position.y = 3.61
     tower.add(baseTop);
 
-    const geoTabla = new THREE.BoxGeometry(0.06,0.05,0.03)
+    const geoTabla = new THREE.BoxGeometry(0.06, 0.05, 0.03)
     for (let i = 0; i < 5; i++) {
         const cube = new THREE.Mesh(geoTabla, material);
-        const angle = (i / 5) * Math.PI *2;
+        const angle = (i / 5) * Math.PI * 2;
         cube.position.set(Math.cos(angle) * 0.085, 0.05, Math.sin(angle) * 0.085);
         cube.lookAt(new THREE.Vector3(0, 0.05, 0));
         baseTop.add(cube);
     }
 
-    const geoRing = new THREE.TorusGeometry(0.086,0.02);
+    const geoRing = new THREE.TorusGeometry(0.086, 0.02);
     const ring = new THREE.Mesh(geoRing, material);
-    ring.rotation.x = Math.PI / 2; 
+    ring.rotation.x = Math.PI / 2;
     ring.position.y = 0.03
     baseTop.add(ring)
 
     return tower
 }
 
-function loadReina(material, posX, posY){
+function loadReina(material, posX, posY) {
     const reina = new THREE.Object3D();
-    reina.position.x = -(posX*0.425)
-    reina.position.z = -(posY*0.425)
+    reina.position.x = -(posX * 0.425)
+    reina.position.z = -(posY * 0.425)
 
-    const geoBase = new THREE.CylinderGeometry(0.08,0.2,0.1)
+    const geoBase = new THREE.CylinderGeometry(0.08, 0.2, 0.1)
     const base = new THREE.Mesh(geoBase, material);
     base.position.x = 1.487
     base.position.z = 1.487
     base.position.y = 3.3
     reina.add(base);
 
-    const geoBody = new THREE.CapsuleGeometry(0.08,0.7,0.5)
+    const geoBody = new THREE.CapsuleGeometry(0.08, 0.7, 0.5)
     const body = new THREE.Mesh(geoBody, material);
     body.position.x = 1.487
     body.position.z = 1.487
     body.position.y = 3.4
     reina.add(body);
 
-    const geoBaseTop = new THREE.CylinderGeometry(0.1,0.1,0.03)
+    const geoBaseTop = new THREE.CylinderGeometry(0.1, 0.1, 0.03)
     const baseTop = new THREE.Mesh(geoBaseTop, material);
     baseTop.position.x = 1.487
     baseTop.position.z = 1.487
     baseTop.position.y = 3.8
     reina.add(baseTop);
 
-    const geoCorona = new THREE.CylinderGeometry(0.09,0.07,0.1)
+    const geoCorona = new THREE.CylinderGeometry(0.09, 0.07, 0.1)
     const corona = new THREE.Mesh(geoCorona, material);
     corona.position.x = 1.487
     corona.position.z = 1.487
     corona.position.y = 3.85
     reina.add(corona);
 
-    const geoTop = new THREE.SphereGeometry(0.05,10,10)
+    const geoTop = new THREE.SphereGeometry(0.05, 10, 10)
     const top = new THREE.Mesh(geoTop, material);
     top.position.x = 1.487
     top.position.z = 1.487
@@ -367,47 +368,47 @@ function loadReina(material, posX, posY){
     return reina
 }
 
-function loadRey(material, posX, posY){
+function loadRey(material, posX, posY) {
     const rey = new THREE.Object3D();
-    rey.position.x = -(posX*0.425)
-    rey.position.z = -(posY*0.425)
+    rey.position.x = -(posX * 0.425)
+    rey.position.z = -(posY * 0.425)
 
-    const geoBase = new THREE.CylinderGeometry(0.08,0.2,0.1)
+    const geoBase = new THREE.CylinderGeometry(0.08, 0.2, 0.1)
     const base = new THREE.Mesh(geoBase, material);
     base.position.x = 1.487
     base.position.z = 1.487
     base.position.y = 3.3
     rey.add(base);
 
-    const geoBody = new THREE.CapsuleGeometry(0.08,0.7,0.5)
+    const geoBody = new THREE.CapsuleGeometry(0.08, 0.7, 0.5)
     const body = new THREE.Mesh(geoBody, material);
     body.position.x = 1.487
     body.position.z = 1.487
     body.position.y = 3.4
     rey.add(body);
 
-    const geoBaseTop = new THREE.CylinderGeometry(0.1,0.1,0.03)
+    const geoBaseTop = new THREE.CylinderGeometry(0.1, 0.1, 0.03)
     const baseTop = new THREE.Mesh(geoBaseTop, material);
     baseTop.position.x = 1.487
     baseTop.position.z = 1.487
     baseTop.position.y = 3.8
     rey.add(baseTop);
 
-    const geoCorona = new THREE.CylinderGeometry(0.09,0.07,0.1)
+    const geoCorona = new THREE.CylinderGeometry(0.09, 0.07, 0.1)
     const corona = new THREE.Mesh(geoCorona, material);
     corona.position.x = 1.487
     corona.position.z = 1.487
     corona.position.y = 3.85
     rey.add(corona);
 
-    const geoTop1 = new THREE.BoxGeometry(0.05,0.15,0.05)
+    const geoTop1 = new THREE.BoxGeometry(0.05, 0.15, 0.05)
     const top1 = new THREE.Mesh(geoTop1, material);
     top1.position.x = 1.487
     top1.position.z = 1.487
     top1.position.y = 3.97
     rey.add(top1);
 
-    const geoTop2 = new THREE.BoxGeometry(0.05,0.05,0.15)
+    const geoTop2 = new THREE.BoxGeometry(0.05, 0.05, 0.15)
     const top2 = new THREE.Mesh(geoTop2, material);
     top2.position.x = 1.487
     top2.position.z = 1.487
@@ -418,260 +419,59 @@ function loadRey(material, posX, posY){
 }
 
 function loadCaballo(material, posX, posY, north) {
-    let x = north? 1.53 : 1.45;
+    let x = north ? 1.53 : 1.45;
     const caballo = new THREE.Object3D();
-    caballo.position.x = -(posX*0.425)
-    caballo.position.z = -(posY*0.425)
+    caballo.position.x = -(posX * 0.425)
+    caballo.position.z = -(posY * 0.425)
 
-    const geoBase = new THREE.CylinderGeometry(0.08,0.2,0.1)
+    const geoBase = new THREE.CylinderGeometry(0.08, 0.2, 0.1)
     const base = new THREE.Mesh(geoBase, material);
     base.position.x = 1.487
     base.position.z = 1.487
     base.position.y = 3.3
     caballo.add(base);
 
-    const geoBody = new THREE.CapsuleGeometry(0.08,0.3,0.5)
+    const geoBody = new THREE.CapsuleGeometry(0.08, 0.3, 0.5)
     const body = new THREE.Mesh(geoBody, material);
     body.position.x = x
     body.position.z = 1.487
     body.position.y = 3.45
-    body.rotation.z = north ? Math.PI /-8 : Math.PI /8;
+    body.rotation.z = north ? Math.PI / -8 : Math.PI / 8;
     caballo.add(body);
 
-    const geoHead = new THREE.CapsuleGeometry(0.06,0.2,0.3)
+    const geoHead = new THREE.CapsuleGeometry(0.06, 0.2, 0.3)
     const head = new THREE.Mesh(geoHead, material);
     head.position.x = x
     head.position.z = 1.487
     head.position.y = 3.58
-    head.rotation.z = north?  Math.PI /-2.3 : Math.PI / 2.3;
+    head.rotation.z = north ? Math.PI / -2.3 : Math.PI / 2.3;
     caballo.add(head);
 
-    const geoEar1 = new THREE.CapsuleGeometry(0.02,0.4,0.6)
+    const geoEar1 = new THREE.CapsuleGeometry(0.02, 0.4, 0.6)
     const ear1 = new THREE.Mesh(geoEar1, material);
     ear1.position.x = x
     ear1.position.z = 1.447
     ear1.position.y = 3.46
-    ear1.rotation.z = north ? Math.PI /-8 : Math.PI /8;
+    ear1.rotation.z = north ? Math.PI / -8 : Math.PI / 8;
     caballo.add(ear1);
 
-    const geoEar2 = new THREE.CapsuleGeometry(0.02,0.4,0.6)
+    const geoEar2 = new THREE.CapsuleGeometry(0.02, 0.4, 0.6)
     const ear2 = new THREE.Mesh(geoEar2, material);
     ear2.position.x = x
     ear2.position.z = 1.533
     ear2.position.y = 3.46
-    ear2.rotation.z = north ? Math.PI /-8 : Math.PI /8;
+    ear2.rotation.z = north ? Math.PI / -8 : Math.PI / 8;
     caballo.add(ear2);
 
     return caballo;
 }
 
-function animate(event)
-{
-    console.log('hola')
-    // Capturar y normalizar
-    let x= event.clientX;
-    let y = event.clientY;
-    x = ( x / window.innerWidth ) * 2 - 1;
-    y = -( y / window.innerHeight ) * 2 + 1;
-
-    // Construir el rayo y detectar la interseccion
-    const rayo = new THREE.Raycaster();
-    rayo.setFromCamera(new THREE.Vector2(x,y), camera);
-    for(let i = 0; i < casillas.length; i++){
-        let casilla = scene.getObjectByName('tablero');
-        console.log(casilla)
-        let intersecciones = rayo.intersectObjects(casilla.children,true);
-        if( intersecciones.length > 0 ){
-            console.log(casilla.name);
-            return;
-        }
-    }
-    // for(let i=0; i<whiteNames.length; i++){
-    //     const ficha = scene.getObjectByName(whiteNames[i]);
-    //     let intersecciones = rayo.intersectObjects(ficha.children,true);
-
-    //     if( intersecciones.length > 0 ){    
-    //         let newPossition = ficha.position.x - 0.425    
-    //         console.log(newPossition);      
-    //         new TWEEN.Tween( ficha.position ).
-    //         to( {x:[newPossition, newPossition],y:[0,0],z:[0,0]}, 2000 ).
-    //         start();
-    //         return;
-    //     }
-    // }
-
-    // for(let i=0; i<blackNames.length; i++){
-    //     const ficha = scene.getObjectByName(blackNames[i]);        
-    //     let intersecciones = rayo.intersectObjects(ficha.children,true);
-
-    //     if( intersecciones.length > 0 ){    
-    //         let newPossition = ficha.position.x + 0.425        
-    //         console.log(newPossition);
-    //         new TWEEN.Tween( ficha.position ).
-    //         to( {x:[newPossition, newPossition],y:[0,0],z:[0,0]}, 2000 ).
-    //         start();
-    //         return;
-    //     }
-    // }
-}
-
-function selectPossition(event)
-{
-    // Capturar y normalizar
-    let x= event.clientX;
-    let y = event.clientY;
-    x = ( x / window.innerWidth ) * 2 - 1;
-    y = -( y / window.innerHeight ) * 2 + 1;
-
-    // Construir el rayo y detectar la interseccion
-    const rayo = new THREE.Raycaster();
-    rayo.setFromCamera(new THREE.Vector2(x,y), camera);
-
-    let found = false;
-    let newPossition;
-    let ficha;
-
-    for(let i=0; i<whiteNames.length; i++){
-        let f = scene.getObjectByName(whiteNames[i]);
-        let intersecciones = rayo.intersectObjects(f.children,true);
-        if(!found && intersecciones.length > 0 ){  
-            ficha = f  
-            newPossition = getNewPosition(ficha)   
-            found = true;    
-        }
-    }
-
-    for(let i=0; i<blackNames.length; i++){
-        let f = scene.getObjectByName(blackNames[i]);        
-        let intersecciones = rayo.intersectObjects(f.children,true);
-
-        if(!found && intersecciones.length > 0 ){  
-            ficha = f
-            newPossition = getNewPosition(ficha)   
-            found = true;   
-        }
-    }
-
-    if(found){
-        // comprobar si existe una ficha en la nueva posicion
-        let existsPossition = false;
-        // [...whiteNames, ...blackNames].forEach((e)=>{
-        //     if(e != ficha.name){
-        //         let f = scene.getObjectByName(e);
-        //         if(f && newPossition.find((x)=>f.position.x.toFixed(2) == x.x.toFixed(2)) && newPossition.find((x)=>f.position.z.toFixed(2) == x.z.toFixed(2))){
-        //             console.log("There is already a piece in the new position.");
-        //             existsPossition = true;
-        //         }
-        //     }
-            
-        // })
-        selectFicha(ficha)
-
-        // casillas.forEach((e)=>{
-        //     console.log()
-        //     let casilla = scene.getObjectByName(e);
-        //     if( newPossition.find((x)=>casilla.position.x.toFixed(2) == x.x.toFixed(2)) && newPossition.find((x)=>casilla.position.z.toFixed(2) == x.z.toFixed(2))){
-        //         console.log('hola')
-        //         casilla.material.color.r = 0
-
-        //     }
-        // })
-
-        // if(!existsPossition){
-        //     console.log(ficha);
-        //     new TWEEN.Tween( ficha.position ).
-        //     to( {x:[newPossition[0].x, newPossition[0].x],y:[0,0],z:[newPossition[0].z,newPossition[0].z]}, 2000 ).
-        //     start();
-        // }
-    }
-}
-
-function selectFicha(ficha){
-    whiteNames.forEach((e)=>{
-        if(e != ficha.name){
-            let f = scene.getObjectByName(e);
-            if(f){
-                f.children.forEach((e)=>{
-                    e.material = new THREE.MeshPhongMaterial({color:'white', specular:'#f0f0f0', shininess: 30});
-                })
-            }
-        }else{
-            ficha.children.forEach((e)=>{
-                e.material = new THREE.MeshPhongMaterial({color:'red', specular:'#f0f0f0', shininess: 30});
-            })
-        }
-    });
-
-    blackNames.forEach((e)=>{
-        if(e != ficha.name){
-            let f = scene.getObjectByName(e);
-            if(f){
-                f.children.forEach((e)=>{
-                    e.material = new THREE.MeshPhongMaterial({color:'black', specular:'#f0f0f0', shininess: 30});
-                })
-            }
-        }else{
-            ficha.children.forEach((e)=>{
-                e.material = new THREE.MeshPhongMaterial({color:'red', specular:'#f0f0f0', shininess: 30});
-            })
-        }
-    });
-}
-
-function getNewPosition(ficha){
-    switch(ficha.name){
-        case whiteNames[0]:
-        case whiteNames[1]:
-        case whiteNames[2]:
-        case whiteNames[3]:
-        case whiteNames[4]:
-        case whiteNames[5]:
-        case whiteNames[6]:
-        case whiteNames[7]:
-            return [{x: ficha.position.x - 0.425, z: ficha.position.z}];
-        case whiteNames[8]:
-        case whiteNames[9]:
-            return [{x: ficha.position.x - 0.425, z: ficha.position.z - 0.425}, {x: ficha.position.x - 0.425, z: ficha.position.z + 0.425}];
-        case whiteNames[10]:
-        case whiteNames[11]:
-            return [{x: ficha.position.x - 0.425, z: ficha.position.z - 0.425}];
-        case whiteNames[12]:
-        case whiteNames[13]:
-            return [{x: ficha.position.x - (0.425*2), z: ficha.position.z - 0.425}, {x: ficha.position.x - (0.425*2), z: ficha.position.z + 0.425}];
-        case whiteNames[14]:
-            return [{x: ficha.position.x - 0.425, z: ficha.position.z}];
-        case whiteNames[15]:
-            return [{x: ficha.position.x - 0.425, z: ficha.position.z}];
-        case blackNames[0]:
-        case blackNames[1]:
-        case blackNames[2]:
-        case blackNames[3]:
-        case blackNames[4]:
-        case blackNames[5]:
-        case blackNames[6]:
-        case blackNames[7]:
-            return [{x: ficha.position.x + 0.425, z: ficha.position.z}];
-        case blackNames[8]:
-        case blackNames[9]:
-            return [{x: ficha.position.x + 0.425, z: ficha.position.z - 0.425}, {x: ficha.position.x + 0.425, z: ficha.position.z + 0.425}];
-        case blackNames[10]:
-        case blackNames[11]:
-            return [{x: ficha.position.x + 0.425, z: ficha.position.z - 0.425}];
-        case blackNames[12]:
-        case blackNames[13]:
-            return [{x: ficha.position.x + (0.425*2), z: ficha.position.z - 0.425}, {x: ficha.position.x + (0.425*2), z: ficha.position.z + 0.425}];
-        
-        
-
-    }
-}
-
-function loadWhite(){
-    let white = new THREE.MeshPhongMaterial({color:'white', specular:'#f0f0f0', shininess: 30});
+function loadWhite() {
+    let white = new THREE.MeshPhongMaterial({ color: 'white', specular: '#f0f0f0', shininess: 30 });
 
     let list = [];
-    for(let i = 0; i<8; i++){
-        let peon = loadPeon(white, 1,i)
+    for (let i = 0; i < 8; i++) {
+        let peon = loadPeon(white, 1, i)
         peon.name = whiteNames[i]
         list.push(peon)
     }
@@ -697,23 +497,23 @@ function loadWhite(){
     list.push(caballo1)
     list.push(caballo2)
 
-    let reina = loadReina(white, 0,4)
+    let reina = loadReina(white, 0, 4)
     reina.name = whiteNames[14]
     list.push(reina)
 
-    let rey = loadRey(white, 0,3)
+    let rey = loadRey(white, 0, 3)
     rey.name = whiteNames[15]
     list.push(rey)
 
     return list;
 }
 
-function loadBlack(){
-    let black = new THREE.MeshPhongMaterial({color:'black', specular:'#f0f0f0', shininess: 30});
+function loadBlack() {
+    let black = new THREE.MeshPhongMaterial({ color: 'black', specular: '#f0f0f0', shininess: 30 });
 
     let list = [];
-    for(let i = 0; i<8; i++){
-        let peon = loadPeon(black, 6,i)
+    for (let i = 0; i < 8; i++) {
+        let peon = loadPeon(black, 6, i)
         peon.name = blackNames[i]
         list.push(peon)
     }
@@ -739,28 +539,805 @@ function loadBlack(){
     list.push(caballo1)
     list.push(caballo2)
 
-    let reina = loadReina(black, 7,4)
+    let reina = loadReina(black, 7, 4)
     reina.name = blackNames[14]
     list.push(reina)
 
-    let rey = loadRey(black, 7,3)
+    let rey = loadRey(black, 7, 3)
     rey.name = blackNames[15]
     list.push(rey)
 
     return list;
 }
 
-function update(delta)
-{
+function animate(event) {
+    // Capturar y normalizar
+    let x = event.clientX;
+    let y = event.clientY;
+    x = (x / window.innerWidth) * 2 - 1;
+    y = -(y / window.innerHeight) * 2 + 1;
+
+    // Construir el rayo y detectar la interseccion
+    const rayo = new THREE.Raycaster();
+    rayo.setFromCamera(new THREE.Vector2(x, y), camera);
+    for (let i = 0; i < casillas.length; i++) {
+        let casilla = scene.getObjectByName('tablero').getObjectByName(casillas[i]).parent;
+        let intersecciones = rayo.intersectObjects(casilla.children, true);
+        if (intersecciones.length > 0) {
+            if (casillasPosibles.find((c) => c.position.x == casilla.position.x && c.position.z == casilla.position.z) && fichaSeleccionada.name != '') {
+                resetTablero();
+                selectFicha({ name: '' })
+                fichaSeleccionada.position.x = casilla.position.x;
+                fichaSeleccionada.position.z = casilla.position.z;
+                fichaSeleccionada = { name: '' };
+                return;
+            }
+        }
+    }
+}
+
+function selectPossition(event) {
+    // Capturar y normalizar
+    let x = event.clientX;
+    let y = event.clientY;
+    x = (x / window.innerWidth) * 2 - 1;
+    y = -(y / window.innerHeight) * 2 + 1;
+
+    // Construir el rayo y detectar la interseccion
+    const rayo = new THREE.Raycaster();
+    rayo.setFromCamera(new THREE.Vector2(x, y), camera);
+
+    let found = false;
+    let ficha;
+
+    for (let i = 0; i < whiteNames.length; i++) {
+        let f = scene.getObjectByName(whiteNames[i]);
+        let intersecciones = rayo.intersectObjects(f.children, true);
+        if (!found && intersecciones.length > 0) {
+            ficha = f
+            found = true;
+        }
+    }
+
+    for (let i = 0; i < blackNames.length; i++) {
+        let f = scene.getObjectByName(blackNames[i]);
+        let intersecciones = rayo.intersectObjects(f.children, true);
+
+        if (!found && intersecciones.length > 0) {
+            ficha = f
+            found = true;
+        }
+    }
+
+    if (found) {
+        selectFicha(ficha)
+        getPossitions(ficha);
+    }
+}
+
+function getPossitions(ficha) {
+    if (ficha.name.includes('peon')) {
+        getPeonPositions(ficha);
+    } else if (ficha.name.includes('tower')) {
+        getTowerPositions(ficha);
+    } else if (ficha.name.includes('alfil')) {
+        getAlfilPositions(ficha);
+    } else if (ficha.name.includes('caballo')) {
+        getCaballoPositions(ficha);
+    } else if (ficha.name.includes('reina')) {
+        getReinaPositions(ficha);
+    } else if (ficha.name.includes('rey')) {
+        getReyPositions(ficha);
+    } else {
+        resetTablero();
+    }
+}
+
+function selectFicha(ficha) {
+    console.log(ficha)
+    whiteNames.forEach((e) => {
+        if (e != ficha.name) {
+            let f = scene.getObjectByName(e);
+            if (f) {
+                f.children.forEach((e) => {
+                    e.material = new THREE.MeshPhongMaterial({ color: 'white', specular: '#f0f0f0', shininess: 30 });
+                })
+            }
+        } else {
+            fichaSeleccionada = ficha;
+            ficha.children.forEach((e) => {
+                e.material = new THREE.MeshPhongMaterial({ color: 'red', specular: '#f0f0f0', shininess: 30 });
+            })
+        }
+    });
+
+    blackNames.forEach((e) => {
+        if (e != ficha.name) {
+            let f = scene.getObjectByName(e);
+            if (f) {
+                f.children.forEach((e) => {
+                    e.material = new THREE.MeshPhongMaterial({ color: 'black', specular: '#f0f0f0', shininess: 30 });
+                })
+            }
+        } else {
+            fichaSeleccionada = ficha;
+            ficha.children.forEach((e) => {
+                e.material = new THREE.MeshPhongMaterial({ color: 'red', specular: '#f0f0f0', shininess: 30 });
+            })
+        }
+    });
+}
+
+function resetTablero() {
+    let white = new THREE.MeshPhongMaterial({ color: 'white', specular: '#f0f0f0', shininess: 30 });
+    let black = new THREE.MeshPhongMaterial({ color: 'black', specular: '#f0f0f0', shininess: 30 });
+    let colors = [white, black];
+    for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+            let casilla = scene.getObjectByName('tablero').getObjectByName(`casilla_${i}_${j}`);
+            casilla.children[0].material = colors[(i + j) % 2];
+        }
+    }
+}
+
+function getPeonPositions(ficha) {
+    let positions = [];
+    if (ficha.name.includes('w_')) {
+        positions.push({ x: ficha.position.x - 0.425, z: ficha.position.z });
+        //cuando está al inicio y puede avanzar dos casillas a la vez
+        if (ficha.position.x == -0.425) {
+            positions.push({ x: ficha.position.x - (0.425 * 2), z: ficha.position.z });
+        }
+    } else {
+        positions.push({ x: ficha.position.x + 0.425, z: ficha.position.z });
+        //cuando está al inicio y puede avanzar dos casillas a la vez
+        if (ficha.position.x == -2.55) {
+            positions.push({ x: ficha.position.x + (0.425 * 2), z: ficha.position.z });
+        }
+    }
+
+    let casillasSeleccionadas = [];
+    //quitar todas las posiciones que, una vez encontrada una ficha en cualquier dirección, no pueda seguir avanzando
+    for (let i = 0; i < casillas.length; i++) {
+        let casilla = scene.getObjectByName('tablero').getObjectByName(casillas[i]).parent;
+        for (let p = 0; p < positions.length; p++) {
+            if (positions[p].x.toFixed(1) == casilla.position.x.toFixed(1) && positions[p].z.toFixed(1) == casilla.position.z.toFixed(1)) {
+                let existeFicha = false;
+                for (let j = 0; j < whiteNames.length; j++) {
+                    let f = scene.getObjectByName(whiteNames[j]);
+                    if (f.position.x == casilla.position.x && f.position.z == casilla.position.z) {
+                        positions.splice(p, positions.length - p);
+                        existeFicha = true;
+                    }
+                }
+                for (let j = 0; j < blackNames.length; j++) {
+                    let f = scene.getObjectByName(blackNames[j]);
+                    if (f.position.x == casilla.position.x && f.position.z == casilla.position.z) {
+                        positions.splice(p, positions.length - p);
+                        existeFicha = true;
+                    }
+                }
+                if (!existeFicha) {
+                    casillasSeleccionadas.push(casilla)
+                }
+            }
+        }
+    }
+    resetTablero();
+    casillasSeleccionadas.forEach((e) => {
+        e.children[0].material = new THREE.MeshPhongMaterial({ color: 'red', specular: '#f0f0f0', shininess: 30 });
+    })
+    casillasPosibles = casillasSeleccionadas;
+    return positions;
+
+}
+
+function getTowerPositions(ficha) {
+    let positions = [];
+    let i;
+    if (ficha.name.includes('w_')) {
+        let fichaEncontrada = false;
+        let initialPos = { x: ficha.position.x - 0.425, z: ficha.position.z }
+        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
+            fichaEncontrada = true;
+        } else {
+            positions.push(initialPos);
+        }
+
+        i = 2;
+        while (!fichaEncontrada && positions[positions.length - 1].x > -2.975) {
+            let pos = { x: ficha.position.x - (0.425 * i), z: ficha.position.z };
+            if (existeFichaEnPosicion(pos.x, pos.z)) {
+                fichaEncontrada = true;
+            } else {
+                positions.push(pos);
+
+            }
+            i++;
+        }
+
+        i = 2
+        fichaEncontrada = false;
+        initialPos = { x: ficha.position.x, z: ficha.position.z - 0.425 };
+        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
+            fichaEncontrada = true;
+        } else {
+            positions.push(initialPos);
+        }
+        while (!fichaEncontrada && positions[positions.length - 1].z > -2.975) {
+            let pos = { x: ficha.position.x, z: ficha.position.z - (0.425 * i) };
+            if (existeFichaEnPosicion(pos.x, pos.z)) {
+                fichaEncontrada = true;
+            } else {
+                positions.push(pos);
+            }
+            i++;
+
+        }
+
+
+        //hacia atrás
+        fichaEncontrada = false
+        if (ficha.position.x < -0) {
+            i = 1;
+            while (!fichaEncontrada && (!positions.length || positions[positions.length - 1].x < -0)) {
+                let pos = { x: ficha.position.x + (0.425 * i), z: ficha.position.z };
+                if (existeFichaEnPosicion(pos.x, pos.z)) {
+                    fichaEncontrada = true;
+                } else {
+                    positions.push(pos);
+                }
+                i++;
+            }
+        }
+
+        fichaEncontrada = false
+        if (ficha.position.z < -0) {
+            i = 1;
+            while (!fichaEncontrada && (!positions.length || positions[positions.length - 1].z < -0)) {
+                let pos = { x: ficha.position.x, z: ficha.position.z + (0.425 * i) };
+                if (existeFichaEnPosicion(pos.x, pos.z)) {
+                    fichaEncontrada = true;
+                } else {
+                    positions.push(pos);
+                }
+                i++;
+            }
+        }
+
+
+    } else {
+        let fichaEncontrada = false;
+        let initialPos = { x: ficha.position.x + 0.425, z: ficha.position.z }
+        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
+            fichaEncontrada = true;
+        } else {
+            positions.push(initialPos);
+        }
+
+        i = 2;
+        while (!fichaEncontrada && positions[positions.length - 1].x < -0) {
+            let pos = { x: ficha.position.x + (0.425 * i), z: ficha.position.z };
+            if (existeFichaEnPosicion(pos.x, pos.z)) {
+                fichaEncontrada = true;
+            } else {
+                positions.push(pos);
+            }
+            i++;
+        }
+
+        i = 2
+        fichaEncontrada = false;
+        initialPos = { x: ficha.position.x, z: ficha.position.z + 0.425 }
+        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
+            fichaEncontrada = true;
+        } else {
+            positions.push(initialPos);
+        }
+        while (!fichaEncontrada && positions[positions.length - 1].z < -0) {
+            let pos = { x: ficha.position.x, z: ficha.position.z + (0.425 * i) };
+            if (existeFichaEnPosicion(pos.x, pos.z)) {
+                console.log('ficha no encontrada')
+                fichaEncontrada = true;
+            } else {
+                positions.push(pos);
+            }
+            i++;
+        }
+
+        fichaEncontrada = false
+        if (ficha.position.x != -2.975) {
+            i = 1;
+            while (!fichaEncontrada && (!positions.length || positions[positions.length - 1].x > -2.975)) {
+                let pos = { x: ficha.position.x - (0.425 * i), z: ficha.position.z };
+                if (existeFichaEnPosicion(pos.x, pos.z)) {
+                    fichaEncontrada = true;
+                } else {
+                    positions.push(pos);
+                }
+                i++;
+            }
+        }
+
+        fichaEncontrada = false
+        if (ficha.position.z > -2.975) {
+            i = 1;
+            while (!fichaEncontrada && (!positions.length || positions[positions.length - 1].z > -2.975)) {
+                let pos = { x: ficha.position.x, z: ficha.position.z - (0.425 * i) };
+                if (existeFichaEnPosicion(pos.x, pos.z)) {
+                    fichaEncontrada = true;
+                } else {
+                    positions.push(pos);
+
+                }
+                i++;
+            }
+        }
+    }
+
+    let casillasSeleccionadas = [];
+    //quitar todas las posiciones que, una vez encontrada una ficha en cualquier dirección, no pueda seguir avanzando
+    for (let i = 0; i < casillas.length; i++) {
+        let casilla = scene.getObjectByName('tablero').getObjectByName(casillas[i]).parent;
+        for (let p = 0; p < positions.length; p++) {
+            if (positions[p].x.toFixed(3) == casilla.position.x.toFixed(3) && positions[p].z.toFixed(3) == casilla.position.z.toFixed(3)) {
+                casillasSeleccionadas.push(casilla)
+            }
+        }
+    }
+    resetTablero();
+    casillasSeleccionadas.forEach((e) => {
+        e.children[0].material = new THREE.MeshPhongMaterial({ color: 'red', specular: '#f0f0f0', shininess: 30 });
+    })
+    casillasPosibles = casillasSeleccionadas;
+    return positions;
+
+}
+
+function getAlfilPositions(ficha) {
+    let positions = [];
+    let i = 2;
+    let fichaEncontrada = false;
+    let initialPos = { x: ficha.position.x - 0.425, z: ficha.position.z - 0.425 }
+    if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
+        fichaEncontrada = true;
+    } else {
+        positions.push(initialPos);
+    }
+    while (!fichaEncontrada && initialPos.x > -2.975 && initialPos.z > -2.975) {
+        initialPos = { x: ficha.position.x - (0.425 * i), z: ficha.position.z - (0.425 * i) }
+        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
+            fichaEncontrada = true;
+        } else {
+            positions.push(initialPos);
+        }
+        i++;
+        
+    }
+
+    i = 2;
+    fichaEncontrada = false;
+    initialPos = { x: ficha.position.x - 0.425, z: ficha.position.z + 0.425 }
+    if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
+        fichaEncontrada = true;
+    } else {
+        positions.push(initialPos);
+    }
+    while (!fichaEncontrada && initialPos.x > -2.975 && initialPos.z < -0) {
+        initialPos = { x: ficha.position.x - (0.425 * i), z: ficha.position.z + (0.425 * i) }
+        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
+            fichaEncontrada = true;
+        } else {
+            positions.push(initialPos);
+        }
+        
+        i++;
+    }
+
+    i = 2;
+    fichaEncontrada = false;
+    initialPos = { x: ficha.position.x + 0.425, z: ficha.position.z + 0.425 }
+    if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
+        fichaEncontrada = true;
+    } else {
+        positions.push(initialPos);
+    }
+    while (!fichaEncontrada && initialPos.x < -0 && initialPos.z < -0) {
+        initialPos = { x: ficha.position.x + (0.425 * i), z: ficha.position.z + (0.425 * i) }
+        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
+            fichaEncontrada = true;
+        } else {
+            positions.push(initialPos);
+        }
+        
+        i++;
+    }
+
+    i = 2;
+    fichaEncontrada = false;
+    initialPos = { x: ficha.position.x + 0.425, z: ficha.position.z - 0.425 }
+    if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
+        fichaEncontrada = true;
+    } else {
+        positions.push(initialPos);
+    }
+    while (!fichaEncontrada && initialPos.x < -0 && initialPos.z > -2.975) {
+        initialPos = { x: ficha.position.x + (0.425 * i), z: ficha.position.z - (0.425 * i) }
+        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
+            fichaEncontrada = true;
+        } else {
+            positions.push(initialPos);
+        }
+        
+        i++;
+    }
+
+    let casillasSeleccionadas = [];
+    //quitar todas las posiciones que, una vez encontrada una ficha en cualquier dirección, no pueda seguir avanzando
+    for (let i = 0; i < casillas.length; i++) {
+        let casilla = scene.getObjectByName('tablero').getObjectByName(casillas[i]).parent;
+        for (let p = 0; p < positions.length; p++) {
+            if (positions[p].x.toFixed(3) == casilla.position.x.toFixed(3) && positions[p].z.toFixed(3) == casilla.position.z.toFixed(3)) {
+                casillasSeleccionadas.push(casilla)
+            }
+        }
+    }
+    resetTablero();
+    casillasSeleccionadas.forEach((e) => {
+        e.children[0].material = new THREE.MeshPhongMaterial({ color: 'red', specular: '#f0f0f0', shininess: 30 });
+    })
+    casillasPosibles = casillasSeleccionadas;
+    return positions;
+}
+
+function getCaballoPositions(ficha) {
+    let positions = [];
+    let initialPos = { x: ficha.position.x - (0.425*2), z: ficha.position.z - 0.425 }
+    if (initialPos.x > -2.975 && initialPos.z > -2.975) {
+        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
+            positions.push(initialPos);
+        }
+    }
+
+    initialPos = { x: ficha.position.x - (0.425*2), z: ficha.position.z + 0.425 }
+    if (initialPos.x >= -2.975 && initialPos.z <= -0) {
+        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
+            positions.push(initialPos);
+        }
+    }
+
+    initialPos = { x: ficha.position.x - 0.425, z: ficha.position.z - (0.425*2) }
+    if (initialPos.x >= -2.975 && initialPos.z >= -2.975) {
+        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
+            positions.push(initialPos);
+        }
+    }
+
+    initialPos = { x: ficha.position.x - 0.425, z: ficha.position.z + (0.425*2) }
+    if (initialPos.x >= -2.975 && initialPos.z <= -0) {
+        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
+            positions.push(initialPos);
+        }
+    }
+
+    initialPos = { x: ficha.position.x + (0.425*2), z: ficha.position.z - 0.425 }
+    if (initialPos.x <= -0 && initialPos.z >= -2.975) {
+        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
+            positions.push(initialPos);
+        }
+    }
+
+    initialPos = { x: ficha.position.x + (0.425*2), z: ficha.position.z + 0.425 }
+    if (initialPos.x <= -0 && initialPos.z <= -0) {
+        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
+            positions.push(initialPos);
+        }
+    }
+
+    initialPos = { x: ficha.position.x + 0.425, z: ficha.position.z - (0.425*2) }
+    if (initialPos.x <= -0 && initialPos.z >= -2.975) {
+        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
+            positions.push(initialPos);
+        }
+    }
+
+    initialPos = { x: ficha.position.x + 0.425, z: ficha.position.z + (0.425*2) }
+    if (initialPos.x <= -0 && initialPos.z <= -0) {
+        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
+            positions.push(initialPos);
+        }
+    }
+
+    let casillasSeleccionadas = [];
+    //quitar todas las posiciones que, una vez encontrada una ficha en cualquier dirección, no pueda seguir avanzando
+    for (let i = 0; i < casillas.length; i++) {
+        let casilla = scene.getObjectByName('tablero').getObjectByName(casillas[i]).parent;
+        for (let p = 0; p < positions.length; p++) {
+            if (positions[p].x.toFixed(3) == casilla.position.x.toFixed(3) && positions[p].z.toFixed(3) == casilla.position.z.toFixed(3)) {
+                casillasSeleccionadas.push(casilla)
+            }
+        }
+    }
+    resetTablero();
+    casillasSeleccionadas.forEach((e) => {
+        e.children[0].material = new THREE.MeshPhongMaterial({ color: 'red', specular: '#f0f0f0', shininess: 30 });
+    })
+    casillasPosibles = casillasSeleccionadas;
+    return positions;
+}
+
+function getReinaPositions(ficha) {
+    let positions = [];
+    let i = 2;
+    let fichaEncontrada = false;
+    let initialPos = { x: ficha.position.x - 0.425, z: ficha.position.z - 0.425 }
+    if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
+        fichaEncontrada = true;
+    } else {
+        positions.push(initialPos);
+    }
+    while (!fichaEncontrada && initialPos.x > -2.975 && initialPos.z > -2.975) {
+        initialPos = { x: ficha.position.x - (0.425 * i), z: ficha.position.z - (0.425 * i) }
+        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
+            fichaEncontrada = true;
+        } else {
+            positions.push(initialPos);
+        }
+        i++;
+        
+    }
+
+    i = 2;
+    fichaEncontrada = false;
+    initialPos = { x: ficha.position.x - 0.425, z: ficha.position.z + 0.425 }
+    if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
+        fichaEncontrada = true;
+    } else {
+        positions.push(initialPos);
+    }
+    while (!fichaEncontrada && initialPos.x > -2.975 && initialPos.z < -0) {
+        initialPos = { x: ficha.position.x - (0.425 * i), z: ficha.position.z + (0.425 * i) }
+        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
+            fichaEncontrada = true;
+        } else {
+            positions.push(initialPos);
+        }
+        
+        i++;
+    }
+
+    i = 2;
+    fichaEncontrada = false;
+    initialPos = { x: ficha.position.x + 0.425, z: ficha.position.z + 0.425 }
+    if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
+        fichaEncontrada = true;
+    } else {
+        positions.push(initialPos);
+    }
+    while (!fichaEncontrada && initialPos.x < -0 && initialPos.z < -0) {
+        initialPos = { x: ficha.position.x + (0.425 * i), z: ficha.position.z + (0.425 * i) }
+        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
+            fichaEncontrada = true;
+        } else {
+            positions.push(initialPos);
+        }
+        
+        i++;
+    }
+
+    i = 2;
+    fichaEncontrada = false;
+    initialPos = { x: ficha.position.x + 0.425, z: ficha.position.z - 0.425 }
+    if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
+        fichaEncontrada = true;
+    } else {
+        positions.push(initialPos);
+    }
+    while (!fichaEncontrada && initialPos.x < -0 && initialPos.z > -2.975) {
+        initialPos = { x: ficha.position.x + (0.425 * i), z: ficha.position.z - (0.425 * i) }
+        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
+            fichaEncontrada = true;
+        } else {
+            positions.push(initialPos);
+        }
+        
+        i++;
+    }
+
+    i = 2;
+    fichaEncontrada = false;
+    initialPos = { x: ficha.position.x - 0.425, z: ficha.position.z }
+    if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
+        fichaEncontrada = true;
+    } else {
+        positions.push(initialPos);
+    }
+    while (!fichaEncontrada && initialPos.x > -2.975) {
+        initialPos = { x: ficha.position.x - (0.425 * i), z: ficha.position.z }
+        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
+            fichaEncontrada = true;
+        } else {
+            positions.push(initialPos);
+        }
+        i++;
+    }
+
+    i = 2;
+    fichaEncontrada = false;
+    initialPos = { x: ficha.position.x + 0.425, z: ficha.position.z }
+    if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
+        fichaEncontrada = true;
+    } else {
+        positions.push(initialPos);
+    }
+    while (!fichaEncontrada && initialPos.x < -0) {
+        initialPos = { x: ficha.position.x + (0.425 * i), z: ficha.position.z }
+        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
+            fichaEncontrada = true;
+        } else {
+            positions.push(initialPos);
+        }
+        i++;
+    }
+
+    i = 2;
+    fichaEncontrada = false;
+    initialPos = { x: ficha.position.x, z: ficha.position.z - 0.425 }
+    if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
+        fichaEncontrada = true;
+    } else {
+        positions.push(initialPos);
+    }
+    while (!fichaEncontrada && initialPos.z > -2.975) {
+        initialPos = { x: ficha.position.x, z: ficha.position.z - (0.425 * i) }
+        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
+            fichaEncontrada = true;
+        } else {
+            positions.push(initialPos);
+        }
+        i++;
+    }
+
+    i = 2;
+    fichaEncontrada = false;
+    initialPos = { x: ficha.position.x, z: ficha.position.z + 0.425 }
+    if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
+        fichaEncontrada = true;
+    } else {
+        positions.push(initialPos);
+    }
+
+    while (!fichaEncontrada && initialPos.z < -0) {
+        initialPos = { x: ficha.position.x, z: ficha.position.z + (0.425 * i) }
+        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
+            fichaEncontrada = true;
+        } else {
+            positions.push(initialPos);
+        }
+        i++;
+    }
+
+    let casillasSeleccionadas = [];
+    //quitar todas las posiciones que, una vez encontrada una ficha en cualquier dirección, no pueda seguir avanzando
+    for (let i = 0; i < casillas.length; i++) {
+        let casilla = scene.getObjectByName('tablero').getObjectByName(casillas[i]).parent;
+        for (let p = 0; p < positions.length; p++) {
+            if (positions[p].x.toFixed(3) == casilla.position.x.toFixed(3) && positions[p].z.toFixed(3) == casilla.position.z.toFixed(3)) {
+                casillasSeleccionadas.push(casilla)
+            }
+        }
+    }
+    resetTablero();
+    casillasSeleccionadas.forEach((e) => {
+        e.children[0].material = new THREE.MeshPhongMaterial({ color: 'red', specular: '#f0f0f0', shininess: 30 });
+    })
+    casillasPosibles = casillasSeleccionadas;
+    return positions;
+}
+
+function getReyPositions(ficha) {
+    let positions = [];
+    let initialPos = { x: ficha.position.x - 0.425, z: ficha.position.z - 0.425 }
+    if (initialPos.x >= -2.975 && initialPos.z >= -2.975) {
+        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
+            positions.push(initialPos);
+        }
+    }
+
+    initialPos = { x: ficha.position.x - 0.425, z: ficha.position.z }
+    if (initialPos.x >= -2.975) {
+        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
+            positions.push(initialPos);
+        }
+    }
+
+    initialPos = { x: ficha.position.x - 0.425, z: ficha.position.z + 0.425 }
+    if (initialPos.x >= -2.975 && initialPos.z <= -0) {
+        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
+            positions.push(initialPos);
+        }
+    }
+
+    initialPos = { x: ficha.position.x, z: ficha.position.z - 0.425 }
+    if (initialPos.z >= -2.975) {
+        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
+            positions.push(initialPos);
+        }
+    }
+
+    initialPos = { x: ficha.position.x, z: ficha.position.z + 0.425 }
+    if (initialPos.z <= -0) {
+        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
+            positions.push(initialPos);
+        }
+    }
+
+    initialPos = { x: ficha.position.x + 0.425, z: ficha.position.z - 0.425 }
+    if (initialPos.x <= -0 && initialPos.z >= -2.975) {
+        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
+            positions.push(initialPos);
+        }
+    }
+
+    initialPos = { x: ficha.position.x + 0.425, z: ficha.position.z }
+    if (initialPos.x <= -0) {
+        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
+            positions.push(initialPos);
+        }
+    }
+
+    initialPos =
+    { x: ficha.position.x + 0.425, z: ficha.position.z + 0.425 }
+    if (initialPos.x <= -0 && initialPos.z <= -0) {
+        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
+            positions.push(initialPos);
+        }
+    }
+
+    let casillasSeleccionadas = [];
+    //quitar todas las posiciones que, una vez encontrada una ficha en cualquier dirección, no pueda seguir avanzando
+    for (let i = 0; i < casillas.length; i++) {
+        let casilla = scene.getObjectByName('tablero').getObjectByName(casillas[i]).parent;
+        for (let p = 0; p < positions.length; p++) {
+            if (positions[p].x.toFixed(3) == casilla.position.x.toFixed(3) && positions[p].z.toFixed(3) == casilla.position.z.toFixed(3)) {
+                casillasSeleccionadas.push(casilla)
+            }
+        }
+    }
+    resetTablero();
+    casillasSeleccionadas.forEach((e) => {
+        e.children[0].material = new THREE.MeshPhongMaterial({ color: 'red', specular: '#f0f0f0', shininess: 30 });
+    })
+    casillasPosibles = casillasSeleccionadas;
+    return positions;
+}
+
+
+function existeFichaEnPosicion(x, z) {
+    for (let i = 0; i < whiteNames.length; i++) {
+        let f = scene.getObjectByName(whiteNames[i]);
+        if (f.position.x.toFixed(3) == x.toFixed(3) && f.position.z.toFixed(3) == z.toFixed(3)) {
+            return true;
+        }
+    }
+    for (let i = 0; i < blackNames.length; i++) {
+        let f = scene.getObjectByName(blackNames[i]);
+        if (f.position.x.toFixed(3) == x.toFixed(3) && f.position.z.toFixed(3) == z.toFixed(3)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function update(delta) {
     /*******************
     * TO DO: Actualizar tween
     *******************/
-    TWEEN.update();   
+    TWEEN.update();
 }
 
-function render(delta)
-{
-    requestAnimationFrame( render );
+function render(delta) {
+    requestAnimationFrame(render);
     update(delta);
-    renderer.render( scene, camera );
+    renderer.render(scene, camera);
 }
