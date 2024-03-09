@@ -1307,7 +1307,12 @@ function loadGUI() {
         },
         restart: () => {
             loadScene();
-        }
+        },
+        inst1: false,
+        inst2: false,
+        inst3: false,
+        inst4: false,
+        inst5: false
     };
 
     // Creacion interfaz
@@ -1318,6 +1323,14 @@ function loadGUI() {
     h.add(effectController, "vistaBlancas").name("Vista blancas");
     h.add(effectController, "vistaNegras").name("Vsita negras");
     h.add(effectController, "restart").name("Volver a empezar");
+
+    // let instrucciones = h.addFolder("Instrucciones de uso");
+    const inst = gui.addFolder("Instrucciones de uso")
+    inst.add(effectController, "inst1").name("Click en una ficha para seleccionarla y ver sus posibles movimientos");
+    inst.add(effectController, "inst2").name("Doble click en una casilla resaltada para mover la ficha seleccionada");
+    inst.add(effectController, "inst3").name("Si hay una ficha enemiga al alcance, se marcará de color morado y se podrá eliminar");
+    inst.add(effectController, "inst4").name("Si el rey es eliminado, el juego termina. La escena se volverá del color del ganador");
+    inst.add(effectController, "inst5").name("Si la partida termina o se quiere reiniciar, pulsar el botón 'Volver a empezar'");
 
 }
 

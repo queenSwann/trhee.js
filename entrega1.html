@@ -38,6 +38,24 @@
             text-align: left;
             z-index: 1;
         }
+
+        .lil-gui .controller>.name {
+            flex-shrink: unset;
+            line-height: var(--widget-height);
+            min-width: var(--name-width);
+            padding-right: var(--spacing);
+            white-space: normal;
+        }
+
+        .lil-gui .controller {
+            display: inherit;
+            margin: var(--spacing) 0;
+            padding: 0 var(--padding);
+        }
+
+        .lil-gui input[type=checkbox] {
+            display: none;
+        }
     </style>
 </head>
 
