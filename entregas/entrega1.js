@@ -25,6 +25,10 @@ let blackNames = ['b_peon1', 'b_peon2', 'b_peon3', 'b_peon4', 'b_peon5', 'b_peon
 let casillas = [];
 let fichaSeleccionada;
 let casillasPosibles = [];
+let casillasPosiblesKill = [];
+
+const ultimaCasilla = -2.975;
+const primeraCasilla = -0;
 // Acciones
 init();
 loadScene();
@@ -98,7 +102,7 @@ function init() {
     scene.add(gradientMesh);
     renderer.domElement.addEventListener('dblclick', animate);
 
-    renderer.domElement.addEventListener('click', selectPossition);
+    renderer.domElement.addEventListener('click', selectPosition);
 }
 
 function loadScene() {
@@ -567,8 +571,47 @@ function animate(event) {
             if (casillasPosibles.find((c) => c.position.x == casilla.position.x && c.position.z == casilla.position.z) && fichaSeleccionada.name != '') {
                 resetTablero();
                 selectFicha({ name: '' })
-                fichaSeleccionada.position.x = casilla.position.x;
-                fichaSeleccionada.position.z = casilla.position.z;
+                new TWEEN.Tween(fichaSeleccionada.position)
+                    .to({ x: casilla.position.x, z: casilla.position.z }, 1000)
+                    .easing(TWEEN.Easing.Quadratic.InOut)
+                    .start();
+                fichaSeleccionada = { name: '' };
+                return;
+            }
+            if (casillasPosiblesKill.find((c) => c.position.x == casilla.position.x && c.position.z == casilla.position.z) && fichaSeleccionada.name != '') {
+                resetTablero();
+                selectFicha({ name: '' })
+                //obtener ficha que se encuentra en la posición de la casilla
+                let fichaEliminar = scene.children.find((f) => f.position.x == casilla.position.x && f.position.z == casilla.position.z);
+
+                new TWEEN.Tween(fichaSeleccionada.position)
+                    .to({ x: casilla.position.x, z: casilla.position.z }, 1000)
+                    .easing(TWEEN.Easing.Quadratic.InOut)
+                    .start();
+
+                //hacer temblar
+                let ladoTemblor = 1;
+                setTimeout(() => {
+                    new TWEEN.Tween(fichaEliminar.position).
+                    to({ x: [fichaEliminar.position.x, fichaEliminar.position.x], 
+                        y: [fichaEliminar.position.y + 1.5, fichaEliminar.position.y-5], 
+                        z: [fichaEliminar.position.z, fichaEliminar.position.z] }, 3000).
+                    interpolation(TWEEN.Interpolation.Bezier).
+                    easing(TWEEN.Easing.Quadratic.InOut).
+                    onUpdate(function () {
+                        hacerTemblar(fichaEliminar, ladoTemblor)
+                        ladoTemblor++;
+                    }).
+                    start();
+                }, 500);
+
+                setTimeout(() => {
+                    //eliminar ficha
+                    scene.children = scene.children.filter((f) => f.name != fichaEliminar.name);
+                    whiteNames = whiteNames.filter((f) => f != fichaEliminar.name);
+                    blackNames = blackNames.filter((f) => f != fichaEliminar.name);
+                }, 3500);
+
                 fichaSeleccionada = { name: '' };
                 return;
             }
@@ -576,7 +619,17 @@ function animate(event) {
     }
 }
 
-function selectPossition(event) {
+function hacerTemblar(ficha, lado) {
+    if (lado % 2 == 0) {
+        ficha.position.x += 0.02;
+        ficha.position.z += 0.02;
+    } else {
+        ficha.position.x -= 0.02;
+        ficha.position.z -= 0.02;
+    }
+}
+
+function selectPosition(event) {
     // Capturar y normalizar
     let x = event.clientX;
     let y = event.clientY;
@@ -594,8 +647,11 @@ function selectPossition(event) {
         let f = scene.getObjectByName(whiteNames[i]);
         let intersecciones = rayo.intersectObjects(f.children, true);
         if (!found && intersecciones.length > 0) {
-            ficha = f
-            found = true;
+            //si la ficha se encuentra en la lista de casillasPosiblesKill
+            if (!casillasPosiblesKill.find((c) => c.position.x == f.position.x && c.position.z == f.position.z)) {
+                ficha = f
+                found = true;
+            }
         }
     }
 
@@ -604,8 +660,10 @@ function selectPossition(event) {
         let intersecciones = rayo.intersectObjects(f.children, true);
 
         if (!found && intersecciones.length > 0) {
-            ficha = f
-            found = true;
+            if (!casillasPosiblesKill.find((c) => c.position.x == f.position.x && c.position.z == f.position.z)) {
+                ficha = f
+                found = true;
+            }
         }
     }
 
@@ -634,7 +692,6 @@ function getPossitions(ficha) {
 }
 
 function selectFicha(ficha) {
-    console.log(ficha)
     whiteNames.forEach((e) => {
         if (e != ficha.name) {
             let f = scene.getObjectByName(e);
@@ -678,6 +735,8 @@ function resetTablero() {
             casilla.children[0].material = colors[(i + j) % 2];
         }
     }
+    casillasPosibles = [];
+    casillasPosiblesKill = [];
 }
 
 function getPeonPositions(ficha) {
@@ -734,599 +793,337 @@ function getPeonPositions(ficha) {
 
 function getTowerPositions(ficha) {
     let positions = [];
-    let i;
-    if (ficha.name.includes('w_')) {
-        let fichaEncontrada = false;
-        let initialPos = { x: ficha.position.x - 0.425, z: ficha.position.z }
-        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
-            fichaEncontrada = true;
-        } else {
-            positions.push(initialPos);
-        }
+    let killPositions = [];
+    let i = 2;
+    let fichaEncontrada = false;
+    let initialPos;
 
-        i = 2;
-        while (!fichaEncontrada && positions[positions.length - 1].x > -2.975) {
-            let pos = { x: ficha.position.x - (0.425 * i), z: ficha.position.z };
-            if (existeFichaEnPosicion(pos.x, pos.z)) {
-                fichaEncontrada = true;
-            } else {
-                positions.push(pos);
+    ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x - 0.425, z: ficha.position.z }, positions, killPositions, fichaEncontrada));
 
-            }
-            i++;
-        }
-
-        i = 2
-        fichaEncontrada = false;
-        initialPos = { x: ficha.position.x, z: ficha.position.z - 0.425 };
-        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
-            fichaEncontrada = true;
-        } else {
-            positions.push(initialPos);
-        }
-        while (!fichaEncontrada && positions[positions.length - 1].z > -2.975) {
-            let pos = { x: ficha.position.x, z: ficha.position.z - (0.425 * i) };
-            if (existeFichaEnPosicion(pos.x, pos.z)) {
-                fichaEncontrada = true;
-            } else {
-                positions.push(pos);
-            }
-            i++;
-
-        }
-
-
-        //hacia atrás
-        fichaEncontrada = false
-        if (ficha.position.x < -0) {
-            i = 1;
-            while (!fichaEncontrada && (!positions.length || positions[positions.length - 1].x < -0)) {
-                let pos = { x: ficha.position.x + (0.425 * i), z: ficha.position.z };
-                if (existeFichaEnPosicion(pos.x, pos.z)) {
-                    fichaEncontrada = true;
-                } else {
-                    positions.push(pos);
-                }
-                i++;
-            }
-        }
-
-        fichaEncontrada = false
-        if (ficha.position.z < -0) {
-            i = 1;
-            while (!fichaEncontrada && (!positions.length || positions[positions.length - 1].z < -0)) {
-                let pos = { x: ficha.position.x, z: ficha.position.z + (0.425 * i) };
-                if (existeFichaEnPosicion(pos.x, pos.z)) {
-                    fichaEncontrada = true;
-                } else {
-                    positions.push(pos);
-                }
-                i++;
-            }
-        }
-
-
-    } else {
-        let fichaEncontrada = false;
-        let initialPos = { x: ficha.position.x + 0.425, z: ficha.position.z }
-        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
-            fichaEncontrada = true;
-        } else {
-            positions.push(initialPos);
-        }
-
-        i = 2;
-        while (!fichaEncontrada && positions[positions.length - 1].x < -0) {
-            let pos = { x: ficha.position.x + (0.425 * i), z: ficha.position.z };
-            if (existeFichaEnPosicion(pos.x, pos.z)) {
-                fichaEncontrada = true;
-            } else {
-                positions.push(pos);
-            }
-            i++;
-        }
-
-        i = 2
-        fichaEncontrada = false;
-        initialPos = { x: ficha.position.x, z: ficha.position.z + 0.425 }
-        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
-            fichaEncontrada = true;
-        } else {
-            positions.push(initialPos);
-        }
-        while (!fichaEncontrada && positions[positions.length - 1].z < -0) {
-            let pos = { x: ficha.position.x, z: ficha.position.z + (0.425 * i) };
-            if (existeFichaEnPosicion(pos.x, pos.z)) {
-                console.log('ficha no encontrada')
-                fichaEncontrada = true;
-            } else {
-                positions.push(pos);
-            }
-            i++;
-        }
-
-        fichaEncontrada = false
-        if (ficha.position.x != -2.975) {
-            i = 1;
-            while (!fichaEncontrada && (!positions.length || positions[positions.length - 1].x > -2.975)) {
-                let pos = { x: ficha.position.x - (0.425 * i), z: ficha.position.z };
-                if (existeFichaEnPosicion(pos.x, pos.z)) {
-                    fichaEncontrada = true;
-                } else {
-                    positions.push(pos);
-                }
-                i++;
-            }
-        }
-
-        fichaEncontrada = false
-        if (ficha.position.z > -2.975) {
-            i = 1;
-            while (!fichaEncontrada && (!positions.length || positions[positions.length - 1].z > -2.975)) {
-                let pos = { x: ficha.position.x, z: ficha.position.z - (0.425 * i) };
-                if (existeFichaEnPosicion(pos.x, pos.z)) {
-                    fichaEncontrada = true;
-                } else {
-                    positions.push(pos);
-
-                }
-                i++;
-            }
-        }
+    while (!fichaEncontrada && initialPos.x > ultimaCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x - (0.425 * i), z: ficha.position.z }, positions, killPositions, fichaEncontrada));
+        i++;
     }
 
-    let casillasSeleccionadas = [];
-    //quitar todas las posiciones que, una vez encontrada una ficha en cualquier dirección, no pueda seguir avanzando
-    for (let i = 0; i < casillas.length; i++) {
-        let casilla = scene.getObjectByName('tablero').getObjectByName(casillas[i]).parent;
-        for (let p = 0; p < positions.length; p++) {
-            if (positions[p].x.toFixed(3) == casilla.position.x.toFixed(3) && positions[p].z.toFixed(3) == casilla.position.z.toFixed(3)) {
-                casillasSeleccionadas.push(casilla)
-            }
-        }
+    i = 2;
+    fichaEncontrada = false;
+    ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x + 0.425, z: ficha.position.z }, positions, killPositions, fichaEncontrada));
+    while (!fichaEncontrada && initialPos.x < primeraCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x + (0.425 * i), z: ficha.position.z }, positions, killPositions, fichaEncontrada));
+        i++;
     }
-    resetTablero();
-    casillasSeleccionadas.forEach((e) => {
-        e.children[0].material = new THREE.MeshPhongMaterial({ color: 'red', specular: '#f0f0f0', shininess: 30 });
-    })
-    casillasPosibles = casillasSeleccionadas;
+
+    i = 2;
+    fichaEncontrada = false;
+    ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x, z: ficha.position.z + 0.425 }, positions, killPositions, fichaEncontrada));
+    while (!fichaEncontrada && initialPos.z < primeraCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x, z: ficha.position.z + (0.425 * i) }, positions, killPositions, fichaEncontrada));
+        i++;
+    }
+
+    i = 2;
+    fichaEncontrada = false;
+    ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x, z: ficha.position.z - 0.425 }, positions, killPositions, fichaEncontrada));
+    while (!fichaEncontrada && initialPos.z > ultimaCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x, z: ficha.position.z - (0.425 * i) }, positions, killPositions, fichaEncontrada));
+
+        i++;
+    }
+
+    seleccionaCasillas(positions, killPositions);
     return positions;
-
 }
 
 function getAlfilPositions(ficha) {
     let positions = [];
-    let i = 2;
+    let killPositions;
     let fichaEncontrada = false;
-    let initialPos = { x: ficha.position.x - 0.425, z: ficha.position.z - 0.425 }
-    if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
-        fichaEncontrada = true;
-    } else {
-        positions.push(initialPos);
-    }
-    while (!fichaEncontrada && initialPos.x > -2.975 && initialPos.z > -2.975) {
-        initialPos = { x: ficha.position.x - (0.425 * i), z: ficha.position.z - (0.425 * i) }
-        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
-            fichaEncontrada = true;
-        } else {
-            positions.push(initialPos);
-        }
-        i++;
-        
-    }
+    let initialPos;
 
-    i = 2;
-    fichaEncontrada = false;
-    initialPos = { x: ficha.position.x - 0.425, z: ficha.position.z + 0.425 }
-    if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
-        fichaEncontrada = true;
-    } else {
-        positions.push(initialPos);
-    }
-    while (!fichaEncontrada && initialPos.x > -2.975 && initialPos.z < -0) {
-        initialPos = { x: ficha.position.x - (0.425 * i), z: ficha.position.z + (0.425 * i) }
-        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
-            fichaEncontrada = true;
-        } else {
-            positions.push(initialPos);
-        }
-        
+    let i = 2;
+    ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x - 0.425, z: ficha.position.z - 0.425 }, positions, [], fichaEncontrada));
+    while (!fichaEncontrada && initialPos.x > ultimaCasilla && initialPos.z > ultimaCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x - (0.425 * i), z: ficha.position.z - (0.425 * i) }, positions, killPositions, fichaEncontrada));
         i++;
     }
 
     i = 2;
     fichaEncontrada = false;
-    initialPos = { x: ficha.position.x + 0.425, z: ficha.position.z + 0.425 }
-    if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
-        fichaEncontrada = true;
-    } else {
-        positions.push(initialPos);
-    }
-    while (!fichaEncontrada && initialPos.x < -0 && initialPos.z < -0) {
-        initialPos = { x: ficha.position.x + (0.425 * i), z: ficha.position.z + (0.425 * i) }
-        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
-            fichaEncontrada = true;
-        } else {
-            positions.push(initialPos);
-        }
-        
+    ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x - 0.425, z: ficha.position.z + 0.425 }, positions, killPositions, fichaEncontrada));
+    while (!fichaEncontrada && initialPos.x > ultimaCasilla && initialPos.z < primeraCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x - (0.425 * i), z: ficha.position.z + (0.425 * i) }, positions, killPositions, fichaEncontrada));
         i++;
     }
 
     i = 2;
     fichaEncontrada = false;
-    initialPos = { x: ficha.position.x + 0.425, z: ficha.position.z - 0.425 }
-    if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
-        fichaEncontrada = true;
-    } else {
-        positions.push(initialPos);
-    }
-    while (!fichaEncontrada && initialPos.x < -0 && initialPos.z > -2.975) {
-        initialPos = { x: ficha.position.x + (0.425 * i), z: ficha.position.z - (0.425 * i) }
-        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
-            fichaEncontrada = true;
-        } else {
-            positions.push(initialPos);
-        }
-        
+    ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x + 0.425, z: ficha.position.z + 0.425 }, positions, killPositions, fichaEncontrada));
+    while (!fichaEncontrada && initialPos.x < primeraCasilla && initialPos.z < primeraCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x + (0.425 * i), z: ficha.position.z + (0.425 * i) }, positions, killPositions, fichaEncontrada));
         i++;
     }
 
-    let casillasSeleccionadas = [];
-    //quitar todas las posiciones que, una vez encontrada una ficha en cualquier dirección, no pueda seguir avanzando
-    for (let i = 0; i < casillas.length; i++) {
-        let casilla = scene.getObjectByName('tablero').getObjectByName(casillas[i]).parent;
-        for (let p = 0; p < positions.length; p++) {
-            if (positions[p].x.toFixed(3) == casilla.position.x.toFixed(3) && positions[p].z.toFixed(3) == casilla.position.z.toFixed(3)) {
-                casillasSeleccionadas.push(casilla)
-            }
-        }
+    i = 2;
+    fichaEncontrada = false;
+    ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x + 0.425, z: ficha.position.z - 0.425 }, positions, killPositions, fichaEncontrada));
+    while (!fichaEncontrada && initialPos.x < primeraCasilla && initialPos.z > ultimaCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x + (0.425 * i), z: ficha.position.z - (0.425 * i) }, positions, killPositions, fichaEncontrada));
+        i++;
     }
-    resetTablero();
-    casillasSeleccionadas.forEach((e) => {
-        e.children[0].material = new THREE.MeshPhongMaterial({ color: 'red', specular: '#f0f0f0', shininess: 30 });
-    })
-    casillasPosibles = casillasSeleccionadas;
+
+    seleccionaCasillas(positions, killPositions);
     return positions;
 }
 
 function getCaballoPositions(ficha) {
     let positions = [];
-    let initialPos = { x: ficha.position.x - (0.425*2), z: ficha.position.z - 0.425 }
-    if (initialPos.x > -2.975 && initialPos.z > -2.975) {
-        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
-            positions.push(initialPos);
-        }
+    let killPositions = [];
+    let fichaEncontrada = false;
+
+    let initialPos = { x: ficha.position.x - (0.425 * 2), z: ficha.position.z - 0.425 };
+    if (initialPos.x > ultimaCasilla && initialPos.z > ultimaCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x - (0.425 * 2), z: ficha.position.z - 0.425 }, positions, killPositions, fichaEncontrada));
     }
 
-    initialPos = { x: ficha.position.x - (0.425*2), z: ficha.position.z + 0.425 }
-    if (initialPos.x >= -2.975 && initialPos.z <= -0) {
-        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
-            positions.push(initialPos);
-        }
+    fichaEncontrada = false;
+    initialPos = { x: ficha.position.x - (0.425 * 2), z: ficha.position.z + 0.425 }
+    if (initialPos.x >= ultimaCasilla && initialPos.z <= primeraCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x - (0.425 * 2), z: ficha.position.z + 0.425 }, positions, killPositions, fichaEncontrada));
     }
 
-    initialPos = { x: ficha.position.x - 0.425, z: ficha.position.z - (0.425*2) }
-    if (initialPos.x >= -2.975 && initialPos.z >= -2.975) {
-        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
-            positions.push(initialPos);
-        }
+    fichaEncontrada = false;
+    initialPos = { x: ficha.position.x - 0.425, z: ficha.position.z - (0.425 * 2) }
+    if (initialPos.x >= ultimaCasilla && initialPos.z >= ultimaCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x - 0.425, z: ficha.position.z - (0.425 * 2) }, positions, killPositions, fichaEncontrada));
     }
 
-    initialPos = { x: ficha.position.x - 0.425, z: ficha.position.z + (0.425*2) }
-    if (initialPos.x >= -2.975 && initialPos.z <= -0) {
-        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
-            positions.push(initialPos);
-        }
+    fichaEncontrada = false;
+    initialPos = { x: ficha.position.x - 0.425, z: ficha.position.z + (0.425 * 2) }
+    if (initialPos.x >= ultimaCasilla && initialPos.z <= primeraCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x - 0.425, z: ficha.position.z + (0.425 * 2) }, positions, killPositions, fichaEncontrada));
     }
 
-    initialPos = { x: ficha.position.x + (0.425*2), z: ficha.position.z - 0.425 }
-    if (initialPos.x <= -0 && initialPos.z >= -2.975) {
-        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
-            positions.push(initialPos);
-        }
+    fichaEncontrada = false;
+    initialPos = { x: ficha.position.x + (0.425 * 2), z: ficha.position.z - 0.425 }
+    if (initialPos.x <= primeraCasilla && initialPos.z >= ultimaCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x + (0.425 * 2), z: ficha.position.z - 0.425 }, positions, killPositions, fichaEncontrada));
     }
 
-    initialPos = { x: ficha.position.x + (0.425*2), z: ficha.position.z + 0.425 }
-    if (initialPos.x <= -0 && initialPos.z <= -0) {
-        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
-            positions.push(initialPos);
-        }
+    fichaEncontrada = false;
+    initialPos = { x: ficha.position.x + (0.425 * 2), z: ficha.position.z + 0.425 }
+    if (initialPos.x <= primeraCasilla && initialPos.z <= primeraCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x + (0.425 * 2), z: ficha.position.z + 0.425 }, positions, killPositions, fichaEncontrada));
     }
 
-    initialPos = { x: ficha.position.x + 0.425, z: ficha.position.z - (0.425*2) }
-    if (initialPos.x <= -0 && initialPos.z >= -2.975) {
-        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
-            positions.push(initialPos);
-        }
+    fichaEncontrada = false;
+    initialPos = { x: ficha.position.x + 0.425, z: ficha.position.z - (0.425 * 2) }
+    if (initialPos.x <= primeraCasilla && initialPos.z >= ultimaCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x + 0.425, z: ficha.position.z - (0.425 * 2) }, positions, killPositions, fichaEncontrada));
     }
 
-    initialPos = { x: ficha.position.x + 0.425, z: ficha.position.z + (0.425*2) }
-    if (initialPos.x <= -0 && initialPos.z <= -0) {
-        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
-            positions.push(initialPos);
-        }
+    fichaEncontrada = false;
+    initialPos = { x: ficha.position.x + 0.425, z: ficha.position.z + (0.425 * 2) }
+    if (initialPos.x <= primeraCasilla && initialPos.z <= primeraCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x + 0.425, z: ficha.position.z + (0.425 * 2) }, positions, killPositions, fichaEncontrada));
     }
 
-    let casillasSeleccionadas = [];
-    //quitar todas las posiciones que, una vez encontrada una ficha en cualquier dirección, no pueda seguir avanzando
-    for (let i = 0; i < casillas.length; i++) {
-        let casilla = scene.getObjectByName('tablero').getObjectByName(casillas[i]).parent;
-        for (let p = 0; p < positions.length; p++) {
-            if (positions[p].x.toFixed(3) == casilla.position.x.toFixed(3) && positions[p].z.toFixed(3) == casilla.position.z.toFixed(3)) {
-                casillasSeleccionadas.push(casilla)
-            }
-        }
-    }
-    resetTablero();
-    casillasSeleccionadas.forEach((e) => {
-        e.children[0].material = new THREE.MeshPhongMaterial({ color: 'red', specular: '#f0f0f0', shininess: 30 });
-    })
-    casillasPosibles = casillasSeleccionadas;
+    seleccionaCasillas(positions, killPositions);
     return positions;
 }
 
 function getReinaPositions(ficha) {
     let positions = [];
+    let killPositions = [];
     let i = 2;
     let fichaEncontrada = false;
-    let initialPos = { x: ficha.position.x - 0.425, z: ficha.position.z - 0.425 }
-    if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
-        fichaEncontrada = true;
-    } else {
-        positions.push(initialPos);
-    }
-    while (!fichaEncontrada && initialPos.x > -2.975 && initialPos.z > -2.975) {
-        initialPos = { x: ficha.position.x - (0.425 * i), z: ficha.position.z - (0.425 * i) }
-        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
-            fichaEncontrada = true;
-        } else {
-            positions.push(initialPos);
-        }
-        i++;
-        
-    }
+    let initialPos;
 
-    i = 2;
-    fichaEncontrada = false;
-    initialPos = { x: ficha.position.x - 0.425, z: ficha.position.z + 0.425 }
-    if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
-        fichaEncontrada = true;
-    } else {
-        positions.push(initialPos);
-    }
-    while (!fichaEncontrada && initialPos.x > -2.975 && initialPos.z < -0) {
-        initialPos = { x: ficha.position.x - (0.425 * i), z: ficha.position.z + (0.425 * i) }
-        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
-            fichaEncontrada = true;
-        } else {
-            positions.push(initialPos);
-        }
-        
+    ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x - 0.425, z: ficha.position.z - 0.425 }, positions, killPositions, fichaEncontrada));
+    while (!fichaEncontrada && initialPos.x > ultimaCasilla && initialPos.z > ultimaCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x - (0.425 * i), z: ficha.position.z - (0.425 * i) }, positions, killPositions, fichaEncontrada));
         i++;
     }
 
     i = 2;
     fichaEncontrada = false;
-    initialPos = { x: ficha.position.x + 0.425, z: ficha.position.z + 0.425 }
-    if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
-        fichaEncontrada = true;
-    } else {
-        positions.push(initialPos);
-    }
-    while (!fichaEncontrada && initialPos.x < -0 && initialPos.z < -0) {
-        initialPos = { x: ficha.position.x + (0.425 * i), z: ficha.position.z + (0.425 * i) }
-        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
-            fichaEncontrada = true;
-        } else {
-            positions.push(initialPos);
-        }
-        
+    ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x - 0.425, z: ficha.position.z + 0.425 }, positions, killPositions, fichaEncontrada));
+    while (!fichaEncontrada && initialPos.x > ultimaCasilla && initialPos.z < primeraCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x - (0.425 * i), z: ficha.position.z + (0.425 * i) }, positions, killPositions, fichaEncontrada));
         i++;
     }
 
     i = 2;
     fichaEncontrada = false;
-    initialPos = { x: ficha.position.x + 0.425, z: ficha.position.z - 0.425 }
-    if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
-        fichaEncontrada = true;
-    } else {
-        positions.push(initialPos);
-    }
-    while (!fichaEncontrada && initialPos.x < -0 && initialPos.z > -2.975) {
-        initialPos = { x: ficha.position.x + (0.425 * i), z: ficha.position.z - (0.425 * i) }
-        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
-            fichaEncontrada = true;
-        } else {
-            positions.push(initialPos);
-        }
-        
+    ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x + 0.425, z: ficha.position.z + 0.425 }, positions, killPositions, fichaEncontrada));
+    while (!fichaEncontrada && initialPos.x < primeraCasilla && initialPos.z < primeraCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x + (0.425 * i), z: ficha.position.z + (0.425 * i) }, positions, killPositions, fichaEncontrada));
         i++;
     }
 
     i = 2;
     fichaEncontrada = false;
-    initialPos = { x: ficha.position.x - 0.425, z: ficha.position.z }
-    if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
-        fichaEncontrada = true;
-    } else {
-        positions.push(initialPos);
-    }
-    while (!fichaEncontrada && initialPos.x > -2.975) {
-        initialPos = { x: ficha.position.x - (0.425 * i), z: ficha.position.z }
-        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
-            fichaEncontrada = true;
-        } else {
-            positions.push(initialPos);
-        }
+    ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x + 0.425, z: ficha.position.z - 0.425 }, positions, killPositions, fichaEncontrada));
+    while (!fichaEncontrada && initialPos.x < primeraCasilla && initialPos.z > ultimaCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x + (0.425 * i), z: ficha.position.z - (0.425 * i) }, positions, killPositions, fichaEncontrada));
         i++;
     }
 
     i = 2;
     fichaEncontrada = false;
-    initialPos = { x: ficha.position.x + 0.425, z: ficha.position.z }
-    if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
-        fichaEncontrada = true;
-    } else {
-        positions.push(initialPos);
-    }
-    while (!fichaEncontrada && initialPos.x < -0) {
-        initialPos = { x: ficha.position.x + (0.425 * i), z: ficha.position.z }
-        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
-            fichaEncontrada = true;
-        } else {
-            positions.push(initialPos);
-        }
+    ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x - 0.425, z: ficha.position.z }, positions, killPositions, fichaEncontrada));
+    while (!fichaEncontrada && initialPos.x > ultimaCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x - (0.425 * i), z: ficha.position.z }, positions, killPositions, fichaEncontrada));
         i++;
     }
 
     i = 2;
     fichaEncontrada = false;
-    initialPos = { x: ficha.position.x, z: ficha.position.z - 0.425 }
-    if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
-        fichaEncontrada = true;
-    } else {
-        positions.push(initialPos);
-    }
-    while (!fichaEncontrada && initialPos.z > -2.975) {
-        initialPos = { x: ficha.position.x, z: ficha.position.z - (0.425 * i) }
-        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
-            fichaEncontrada = true;
-        } else {
-            positions.push(initialPos);
-        }
+    ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x + 0.425, z: ficha.position.z }, positions, killPositions, fichaEncontrada));
+    while (!fichaEncontrada && initialPos.x < primeraCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x + (0.425 * i), z: ficha.position.z }, positions, killPositions, fichaEncontrada));
         i++;
     }
 
     i = 2;
     fichaEncontrada = false;
-    initialPos = { x: ficha.position.x, z: ficha.position.z + 0.425 }
-    if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
-        fichaEncontrada = true;
-    } else {
-        positions.push(initialPos);
-    }
-
-    while (!fichaEncontrada && initialPos.z < -0) {
-        initialPos = { x: ficha.position.x, z: ficha.position.z + (0.425 * i) }
-        if (existeFichaEnPosicion(initialPos.x, initialPos.z)) {
-            fichaEncontrada = true;
-        } else {
-            positions.push(initialPos);
-        }
+    ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x, z: ficha.position.z - 0.425 }, positions, killPositions, fichaEncontrada));
+    while (!fichaEncontrada && initialPos.z > ultimaCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x, z: ficha.position.z - (0.425 * i) }, positions, killPositions, fichaEncontrada));
         i++;
     }
 
-    let casillasSeleccionadas = [];
-    //quitar todas las posiciones que, una vez encontrada una ficha en cualquier dirección, no pueda seguir avanzando
-    for (let i = 0; i < casillas.length; i++) {
-        let casilla = scene.getObjectByName('tablero').getObjectByName(casillas[i]).parent;
-        for (let p = 0; p < positions.length; p++) {
-            if (positions[p].x.toFixed(3) == casilla.position.x.toFixed(3) && positions[p].z.toFixed(3) == casilla.position.z.toFixed(3)) {
-                casillasSeleccionadas.push(casilla)
-            }
-        }
+    i = 2;
+    fichaEncontrada = false;
+    ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x, z: ficha.position.z + 0.425 }, positions, killPositions, fichaEncontrada));
+    while (!fichaEncontrada && initialPos.z < primeraCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x, z: ficha.position.z + (0.425 * i) }, positions, killPositions, fichaEncontrada));
+        i++;
     }
-    resetTablero();
-    casillasSeleccionadas.forEach((e) => {
-        e.children[0].material = new THREE.MeshPhongMaterial({ color: 'red', specular: '#f0f0f0', shininess: 30 });
-    })
-    casillasPosibles = casillasSeleccionadas;
+
+    seleccionaCasillas(positions, killPositions);
     return positions;
 }
 
 function getReyPositions(ficha) {
     let positions = [];
+    let killPositions = [];
+    let fichaEncontrada = false;
+
     let initialPos = { x: ficha.position.x - 0.425, z: ficha.position.z - 0.425 }
-    if (initialPos.x >= -2.975 && initialPos.z >= -2.975) {
-        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
-            positions.push(initialPos);
-        }
+    if (initialPos.x >= ultimaCasilla && initialPos.z >= ultimaCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x - 0.425, z: ficha.position.z - 0.425 }, positions, killPositions, fichaEncontrada));
     }
 
+    fichaEncontrada = false;
     initialPos = { x: ficha.position.x - 0.425, z: ficha.position.z }
-    if (initialPos.x >= -2.975) {
-        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
-            positions.push(initialPos);
-        }
+    if (initialPos.x >= ultimaCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x - 0.425, z: ficha.position.z }, positions, killPositions, fichaEncontrada));
     }
 
+    fichaEncontrada = false;
     initialPos = { x: ficha.position.x - 0.425, z: ficha.position.z + 0.425 }
-    if (initialPos.x >= -2.975 && initialPos.z <= -0) {
-        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
-            positions.push(initialPos);
-        }
+    if (initialPos.x >= ultimaCasilla && initialPos.z <= primeraCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x - 0.425, z: ficha.position.z + 0.425 }, positions, killPositions, fichaEncontrada));
     }
 
+    fichaEncontrada = false;
     initialPos = { x: ficha.position.x, z: ficha.position.z - 0.425 }
-    if (initialPos.z >= -2.975) {
-        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
-            positions.push(initialPos);
-        }
+    if (initialPos.z >= ultimaCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x, z: ficha.position.z - 0.425 }, positions, killPositions, fichaEncontrada));
     }
 
+    fichaEncontrada = false;
     initialPos = { x: ficha.position.x, z: ficha.position.z + 0.425 }
-    if (initialPos.z <= -0) {
-        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
-            positions.push(initialPos);
-        }
+    if (initialPos.z <= primeraCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x, z: ficha.position.z + 0.425 }, positions, killPositions, fichaEncontrada));
     }
 
+    fichaEncontrada = false;
     initialPos = { x: ficha.position.x + 0.425, z: ficha.position.z - 0.425 }
-    if (initialPos.x <= -0 && initialPos.z >= -2.975) {
-        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
-            positions.push(initialPos);
-        }
+    if (initialPos.x <= primeraCasilla && initialPos.z >= ultimaCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x + 0.425, z: ficha.position.z - 0.425 }, positions, killPositions, fichaEncontrada));
     }
 
+    fichaEncontrada = false;
     initialPos = { x: ficha.position.x + 0.425, z: ficha.position.z }
-    if (initialPos.x <= -0) {
-        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
-            positions.push(initialPos);
-        }
+    if (initialPos.x <= primeraCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x + 0.425, z: ficha.position.z }, positions, killPositions, fichaEncontrada));
     }
 
-    initialPos =
-    { x: ficha.position.x + 0.425, z: ficha.position.z + 0.425 }
-    if (initialPos.x <= -0 && initialPos.z <= -0) {
-        if(!existeFichaEnPosicion(initialPos.x, initialPos.z)){
-            positions.push(initialPos);
-        }
+    fichaEncontrada = false;
+    initialPos = { x: ficha.position.x + 0.425, z: ficha.position.z + 0.425 }
+    if (initialPos.x <= primeraCasilla && initialPos.z <= primeraCasilla) {
+        ({ initialPos, positions, killPositions, fichaEncontrada } = actualizarPosiciones({ x: ficha.position.x + 0.425, z: ficha.position.z + 0.425 }, positions, killPositions, fichaEncontrada));
     }
 
-    let casillasSeleccionadas = [];
-    //quitar todas las posiciones que, una vez encontrada una ficha en cualquier dirección, no pueda seguir avanzando
-    for (let i = 0; i < casillas.length; i++) {
-        let casilla = scene.getObjectByName('tablero').getObjectByName(casillas[i]).parent;
-        for (let p = 0; p < positions.length; p++) {
-            if (positions[p].x.toFixed(3) == casilla.position.x.toFixed(3) && positions[p].z.toFixed(3) == casilla.position.z.toFixed(3)) {
-                casillasSeleccionadas.push(casilla)
-            }
-        }
-    }
-    resetTablero();
-    casillasSeleccionadas.forEach((e) => {
-        e.children[0].material = new THREE.MeshPhongMaterial({ color: 'red', specular: '#f0f0f0', shininess: 30 });
-    })
-    casillasPosibles = casillasSeleccionadas;
+    seleccionaCasillas(positions, killPositions);
     return positions;
 }
-
 
 function existeFichaEnPosicion(x, z) {
     for (let i = 0; i < whiteNames.length; i++) {
         let f = scene.getObjectByName(whiteNames[i]);
         if (f.position.x.toFixed(3) == x.toFixed(3) && f.position.z.toFixed(3) == z.toFixed(3)) {
+            if (fichaSeleccionada.name.includes('b_')) {
+                return { kill: true }
+            }
             return true;
         }
     }
     for (let i = 0; i < blackNames.length; i++) {
         let f = scene.getObjectByName(blackNames[i]);
         if (f.position.x.toFixed(3) == x.toFixed(3) && f.position.z.toFixed(3) == z.toFixed(3)) {
+            if (fichaSeleccionada.name.includes('w_')) {
+                return { kill: true }
+            }
             return true;
         }
     }
     return false;
+}
+
+function seleccionaCasillas(positions, killPositions = []) {
+    let casillasSeleccionadas = [];
+    let casillasKill = [];
+    //quitar todas las posiciones que, una vez encontrada una ficha en cualquier dirección, no pueda seguir avanzando
+    for (let i = 0; i < casillas.length; i++) {
+        let casilla = scene.getObjectByName('tablero').getObjectByName(casillas[i]).parent;
+        for (let p = 0; p < positions.length; p++) {
+            if (positions[p].x.toFixed(3) == casilla.position.x.toFixed(3) && positions[p].z.toFixed(3) == casilla.position.z.toFixed(3)) {
+                casillasSeleccionadas.push(casilla)
+            }
+        }
+
+        for (let p = 0; p < killPositions.length; p++) {
+            if (killPositions[p].x.toFixed(3) == casilla.position.x.toFixed(3) && killPositions[p].z.toFixed(3) == casilla.position.z.toFixed(3)) {
+                casillasKill.push(casilla)
+            }
+        }
+    }
+    resetTablero();
+    casillasSeleccionadas.forEach((e) => {
+        e.children[0].material = new THREE.MeshPhongMaterial({ color: 'red', specular: '#f0f0f0', shininess: 30 });
+    })
+    casillasKill.forEach((e) => {
+        e.children[0].material = new THREE.MeshPhongMaterial({ color: 'purple', specular: '#f0f0f0', shininess: 30 });
+    })
+    casillasPosibles = casillasSeleccionadas;
+    casillasPosiblesKill = casillasKill;
+}
+
+function actualizarPosiciones(initialPos, positions, killPositions, fichaEncontrada) {
+    let existe = existeFichaEnPosicion(initialPos.x, initialPos.z);
+    if (existe && !fichaEncontrada) {
+        if (existe.kill) {
+            killPositions.push(initialPos);
+        }
+
+        fichaEncontrada = true;
+    } else {
+        positions.push(initialPos);
+    }
+
+    return { initialPos, positions, killPositions, fichaEncontrada }
 }
 
 function update(delta) {
