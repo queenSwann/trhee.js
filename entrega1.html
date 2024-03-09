@@ -4,61 +4,57 @@
     Plantilla de carga de aplicaciones Threejs
 -->
 <html lang="es">
-    <head>
-        <meta charset="utf-8">
-        <title>Aplicacion en Threejs</title>
-        <style>
-            body {
-        background-color: white;
-        margin: 0px;
-        overflow: hidden;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh; /* Altura completa de la ventana */
-    }
 
-    #container {
-        width: 90%; /* Ancho del recuadro */
-        height: 90%; /* Altura del recuadro */
-        position: relative; /* Posición relativa para centrar correctamente */
-        border: 2px solid #000; /* Borde para visualizar el área del canvas */
-    }
+<head>
+    <meta charset="utf-8">
+    <title>Aplicacion en Threejs</title>
+    <style>
+        body {
+            background-color: white;
+            margin: 0px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            /* Altura completa de la ventana */
+        }
 
-    #info {
-        position: absolute;
-        bottom: 0px;
-        left: 50px;
-        text-align: left;
-        z-index: 1; 
-    }
+        #container {
+            width: 100%;
+            /* Ancho del recuadro */
+            height: 100%;
+            /* Altura del recuadro */
+            position: relative;
+            /* Posición relativa para centrar correctamente */
+            border: 2px solid #000;
+            /* Borde para visualizar el área del canvas */
+        }
 
-    .title {
-        position: absolute;
-        top: 2rem;
-        left: 2rem;
-        z-index: 1; 
-        font-size: 40px;
-    }
-        </style>
-    </head>
-    <body>
+        #info {
+            position: absolute;
+            bottom: 0px;
+            left: 50px;
+            text-align: left;
+            z-index: 1;
+        }
+    </style>
+</head>
 
-        <div class="title">
-            Mesa cuadrada
-        </div>
+<body>
 
-        <div id="container"></div>
+    <div id="container"></div>
 
-        <div id="info">
-            <h2>anvarod1/AGM/MESA</h2> 
-        </div>
+    <div id="info">
+        <h2>anvarod1/AGM/MESA</h2>
+    </div>
 
 
-        <!-- Declaracion del espacio de nombres three -->
-        <script type="importmap">
+    <!-- Declaracion del espacio de nombres three -->
+    <script type="importmap">
         { "imports": { "three": "./lib/three.module.js" } }
         </script>
-        <script type="module" src="entregas/entrega1.js"></script>
-    </body>
+    <script type="module" src="entregas/entrega1.js"></script>
+</body>
+
 </html>
