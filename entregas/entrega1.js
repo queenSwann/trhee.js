@@ -19,6 +19,8 @@ let renderer, scene, camera;
  * TO DO: Variables globales de la aplicacion
  *******************/
 let cameraControls, effectController;
+let whiteInitialNames = ['w_peon1', 'w_peon2', 'w_peon3', 'w_peon4', 'w_peon5', 'w_peon6', 'w_peon7', 'w_peon8', 'w_alfil1', 'w_alfil2', 'w_tower1', 'w_tower2', 'w_caballo1', 'w_caballo2', 'w_reina', 'w_rey'];
+let blackInitialNames = ['b_peon1', 'b_peon2', 'b_peon3', 'b_peon4', 'b_peon5', 'b_peon6', 'b_peon7', 'b_peon8', 'b_alfil1', 'b_alfil2', 'b_tower1', 'b_tower2', 'b_caballo1', 'b_caballo2', 'b_reina', 'b_rey'];
 
 let whiteNames = ['w_peon1', 'w_peon2', 'w_peon3', 'w_peon4', 'w_peon5', 'w_peon6', 'w_peon7', 'w_peon8', 'w_alfil1', 'w_alfil2', 'w_tower1', 'w_tower2', 'w_caballo1', 'w_caballo2', 'w_reina', 'w_rey'];
 let blackNames = ['b_peon1', 'b_peon2', 'b_peon3', 'b_peon4', 'b_peon5', 'b_peon6', 'b_peon7', 'b_peon8', 'b_alfil1', 'b_alfil2', 'b_tower1', 'b_tower2', 'b_caballo1', 'b_caballo2', 'b_reina', 'b_rey'];
@@ -26,6 +28,12 @@ let casillas = [];
 let fichaSeleccionada;
 let casillasPosibles = [];
 let casillasPosiblesKill = [];
+
+let winner = '';
+let turno = 0;
+
+let suelo;
+var sueloMaterial = new THREE.MeshBasicMaterial({ color: 0x2a382a });
 
 const ultimaCasilla = -2.975;
 const primeraCasilla = -0;
@@ -58,6 +66,13 @@ function init() {
     cameraControls = new OrbitControls(camera, renderer.domElement);
     cameraControls.target.set(0, 1, 0);
     camera.lookAt(new THREE.Vector3(0, 1, 0));
+
+    // Crear un material para el plano
+    var geometry = new THREE.PlaneGeometry(10000, 10000);
+    suelo = new THREE.Mesh(geometry, sueloMaterial);
+    suelo.rotation.x = -Math.PI / 2;
+    suelo.position.y = -1.02;
+    scene.add(suelo);
 
     // Luces
     const ambiental = new THREE.AmbientLight(0x222222);
@@ -125,16 +140,18 @@ function loadScene() {
     const cubemap = loader.load(["entregas/scene_e1/posx.jpg", "entregas/scene_e1/negx.jpg",
         "entregas/scene_e1/posy.jpg", "entregas/scene_e1/negy.jpg",
         "entregas/scene_e1/posz.jpg", "entregas/scene_e1/negz.jpg"]);
-    // scene.background = cubemap;
+    scene.background = cubemap;
 
 
     const mesa = loadMesa(material);
     const tablero = loadTablero(material, materialWhite, materialBlack);
+    const bordes = loadBordes(material, materialWhite);
     tablero.name = 'tablero';
     const fichasBlancas = loadWhite();
     const fichasNegras = loadBlack();
     scene.add(mesa)
     scene.add(tablero)
+    scene.add(bordes)
     fichasBlancas.forEach((e) => scene.add(e))
     fichasNegras.forEach((e) => scene.add(e))
 }
@@ -204,6 +221,71 @@ function loadTablero(material, white, black) {
     }
 
     return tablero;
+}
+
+function loadBordes(material, initialColor) {
+    const bordes = new THREE.Object3D();
+
+    const geoBorde1 = new THREE.BoxGeometry(3.4, 0.1, 0.1)
+    const borde1 = new THREE.Mesh(geoBorde1, initialColor);
+    borde1.position.y = 3.2
+    borde1.position.z = 1.7
+    bordes.add(borde1);
+
+    const geoBorde2 = new THREE.BoxGeometry(3.4, 0.1, 0.1)
+    const borde2 = new THREE.Mesh(geoBorde2, initialColor);
+    borde2.position.y = 3.2
+    borde2.position.z = -1.7
+    bordes.add(borde2);
+
+    const geoBorde3 = new THREE.BoxGeometry(0.1, 0.1, 3.4)
+    const borde3 = new THREE.Mesh(geoBorde3, initialColor);
+    borde3.position.y = 3.2
+    borde3.position.x = 1.7
+    bordes.add(borde3);
+
+    const geoBorde4 = new THREE.BoxGeometry(0.1, 0.1, 3.4)
+    const borde4 = new THREE.Mesh(geoBorde4, initialColor);
+    borde4.position.y = 3.2
+    borde4.position.x = -1.7
+    bordes.add(borde4);
+
+    //esquinas
+    const esquinas = new THREE.Object3D();
+
+    const geoEsquina1 = new THREE.BoxGeometry(0.09, 0.09, 0.09)
+    const esquina1 = new THREE.Mesh(geoEsquina1, material);
+    esquina1.position.y = 3.2
+    esquina1.position.x = 1.7
+    esquina1.position.z = 1.7
+    esquinas.add(esquina1);
+
+    const geoEsquina2 = new THREE.BoxGeometry(0.09, 0.09, 0.09)
+    const esquina2 = new THREE.Mesh(geoEsquina2, material);
+    esquina2.position.y = 3.2
+    esquina2.position.x = 1.7
+    esquina2.position.z = -1.7
+    esquinas.add(esquina2);
+
+    const geoEsquina3 = new THREE.BoxGeometry(0.09, 0.09, 0.09)
+    const esquina3 = new THREE.Mesh(geoEsquina3, material);
+    esquina3.position.y = 3.2
+    esquina3.position.x = -1.7
+    esquina3.position.z = 1.7
+    esquinas.add(esquina3);
+
+    const geoEsquina4 = new THREE.BoxGeometry(0.09, 0.09, 0.09)
+    const esquina4 = new THREE.Mesh(geoEsquina4, material);
+    esquina4.position.y = 3.2
+    esquina4.position.x = -1.7
+    esquina4.position.z = -1.7
+    esquinas.add(esquina4);
+
+    bordes.add(esquinas);
+
+    bordes.name = 'bordes';
+
+    return bordes;
 }
 
 function loadPeon(material, posX, posY) {
@@ -575,8 +657,9 @@ function animate(event) {
                     .to({ x: casilla.position.x, z: casilla.position.z }, 1000)
                     .easing(TWEEN.Easing.Quadratic.InOut)
                     .start();
-                fichaSeleccionada = { name: '' };
-                return;
+
+
+                updateTurno();
             }
             if (casillasPosiblesKill.find((c) => c.position.x == casilla.position.x && c.position.z == casilla.position.z) && fichaSeleccionada.name != '') {
                 resetTablero();
@@ -593,16 +676,18 @@ function animate(event) {
                 let ladoTemblor = 1;
                 setTimeout(() => {
                     new TWEEN.Tween(fichaEliminar.position).
-                    to({ x: [fichaEliminar.position.x, fichaEliminar.position.x], 
-                        y: [fichaEliminar.position.y + 1.5, fichaEliminar.position.y-5], 
-                        z: [fichaEliminar.position.z, fichaEliminar.position.z] }, 3000).
-                    interpolation(TWEEN.Interpolation.Bezier).
-                    easing(TWEEN.Easing.Quadratic.InOut).
-                    onUpdate(function () {
-                        hacerTemblar(fichaEliminar, ladoTemblor)
-                        ladoTemblor++;
-                    }).
-                    start();
+                        to({
+                            x: [fichaEliminar.position.x, fichaEliminar.position.x],
+                            y: [fichaEliminar.position.y + 1.5, fichaEliminar.position.y - 5],
+                            z: [fichaEliminar.position.z, fichaEliminar.position.z]
+                        }, 3000).
+                        interpolation(TWEEN.Interpolation.Bezier).
+                        easing(TWEEN.Easing.Quadratic.InOut).
+                        onUpdate(function () {
+                            hacerTemblar(fichaEliminar, ladoTemblor)
+                            ladoTemblor++;
+                        }).
+                        start();
                 }, 500);
 
                 setTimeout(() => {
@@ -610,11 +695,15 @@ function animate(event) {
                     scene.children = scene.children.filter((f) => f.name != fichaEliminar.name);
                     whiteNames = whiteNames.filter((f) => f != fichaEliminar.name);
                     blackNames = blackNames.filter((f) => f != fichaEliminar.name);
+                    updateWinner();
+                    updateTurno();
                 }, 3500);
-
-                fichaSeleccionada = { name: '' };
-                return;
             }
+
+
+
+            fichaSeleccionada = { name: '' };
+            return;
         }
     }
 }
@@ -643,26 +732,31 @@ function selectPosition(event) {
     let found = false;
     let ficha;
 
-    for (let i = 0; i < whiteNames.length; i++) {
-        let f = scene.getObjectByName(whiteNames[i]);
-        let intersecciones = rayo.intersectObjects(f.children, true);
-        if (!found && intersecciones.length > 0) {
-            //si la ficha se encuentra en la lista de casillasPosiblesKill
-            if (!casillasPosiblesKill.find((c) => c.position.x == f.position.x && c.position.z == f.position.z)) {
-                ficha = f
-                found = true;
+    if (turno % 2 == 0 && !winner) {
+        for (let i = 0; i < whiteNames.length; i++) {
+            let f = scene.getObjectByName(whiteNames[i]);
+            let intersecciones = rayo.intersectObjects(f.children, true);
+            if (!found && intersecciones.length > 0) {
+                //si la ficha se encuentra en la lista de casillasPosiblesKill
+                if (!casillasPosiblesKill.find((c) => c.position.x == f.position.x && c.position.z == f.position.z)) {
+                    ficha = f
+                    found = true;
+                }
             }
         }
     }
 
-    for (let i = 0; i < blackNames.length; i++) {
-        let f = scene.getObjectByName(blackNames[i]);
-        let intersecciones = rayo.intersectObjects(f.children, true);
 
-        if (!found && intersecciones.length > 0) {
-            if (!casillasPosiblesKill.find((c) => c.position.x == f.position.x && c.position.z == f.position.z)) {
-                ficha = f
-                found = true;
+    if (turno % 2 != 0 && !winner) {
+        for (let i = 0; i < blackNames.length; i++) {
+            let f = scene.getObjectByName(blackNames[i]);
+            let intersecciones = rayo.intersectObjects(f.children, true);
+
+            if (!found && intersecciones.length > 0) {
+                if (!casillasPosiblesKill.find((c) => c.position.x == f.position.x && c.position.z == f.position.z)) {
+                    ficha = f
+                    found = true;
+                }
             }
         }
     }
@@ -708,6 +802,7 @@ function selectFicha(ficha) {
         }
     });
 
+
     blackNames.forEach((e) => {
         if (e != ficha.name) {
             let f = scene.getObjectByName(e);
@@ -723,6 +818,8 @@ function selectFicha(ficha) {
             })
         }
     });
+
+
 }
 
 function resetTablero() {
@@ -1126,6 +1223,28 @@ function actualizarPosiciones(initialPos, positions, killPositions, fichaEncontr
     return { initialPos, positions, killPositions, fichaEncontrada }
 }
 
+function updateTurno() {
+    if (winner.length) {
+
+    } else {
+        console.log('turno', turno);
+        turno++;
+        scene.getObjectByName('bordes').children.forEach((e) => {
+            e.material = new THREE.MeshPhongMaterial({ color: turno%2? 'black' : 'white',  specular: '#f0f0f0', shininess: 30 });
+        }
+        );
+    }
+}
+
+function updateWinner(){
+    if(!whiteNames.find((name)=>name.includes('rey'))){
+        winner = 'b';
+        suelo.material = new THREE.MeshStandardMaterial({ color:'black', roughness:0.7 });
+    }else if(!blackNames.find((name)=>name.includes('rey'))){
+        winner = 'w';
+        suelo.material = new THREE.MeshStandardMaterial({ color:'white', roughness:0.7 });
+    }
+}
 function update(delta) {
     /*******************
     * TO DO: Actualizar tween
