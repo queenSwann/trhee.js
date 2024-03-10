@@ -1047,24 +1047,38 @@ function updateWinner(ficha) {
     let initialPos = { x: ficha.position.x, z: ficha.position.z, y: ficha.position.y };
     if (!whiteNames.find((name) => name.includes('rey'))) {
         winner = 'b';
-        setInterval(() => {
-            new TWEEN.Tween(ficha.position).
-                to({ y: [initialPos.y + 0.1, initialPos.y] }, 1000).
-                interpolation(TWEEN.Interpolation.Bezier).
-                easing(TWEEN.Easing.Quadratic.InOut).
-                start();
-        }
-            , 1000);
+        blackNames.forEach((name) => {
+            let f = scene.getObjectByName(name);
+            setInterval(() => {
+                new TWEEN.Tween(f.position).
+                    to({ y: [initialPos.y + 0.15, initialPos.y] }, 1000).
+                    interpolation(TWEEN.Interpolation.Bezier).
+                    easing(TWEEN.Easing.Quadratic.InOut).
+                    onUpdate(() => {
+                        f.children.forEach((e) => {
+                            e.rotation.y += 0.1;
+                        }) 
+                    }).
+                    start();
+            }
+            , 1000);});
     } else if (!blackNames.find((name) => name.includes('rey'))) {
         winner = 'w';
-        setInterval(() => {
-            new TWEEN.Tween(ficha.position).
-                to({ y: [initialPos.y + 0.1, initialPos.y] }, 1000).
-                interpolation(TWEEN.Interpolation.Bezier).
-                easing(TWEEN.Easing.Quadratic.InOut).
-                start();
-        }
-            , 1000);
+        whiteNames.forEach((name) => {
+            let f = scene.getObjectByName(name);
+            setInterval(() => {
+                new TWEEN.Tween(f.position).
+                    to({ y: [initialPos.y + 0.15, initialPos.y] }, 1000).
+                    interpolation(TWEEN.Interpolation.Bezier).
+                    easing(TWEEN.Easing.Quadratic.InOut).
+                    onUpdate(() => {
+                        f.children.forEach((e) => {
+                            e.rotation.y += 0.1;
+                        }) 
+                    }).
+                    start();
+            }
+            , 1000);});
     }
 
 
@@ -1109,7 +1123,7 @@ function loadGUI() {
     inst.add(effectController, "inst1").name("Click en una ficha para seleccionarla y ver sus posibles movimientos");
     inst.add(effectController, "inst2").name("Doble click en una casilla resaltada para mover la ficha seleccionada");
     inst.add(effectController, "inst3").name("Si hay una ficha enemiga al alcance, se marcará de color morado y se podrá eliminar");
-    inst.add(effectController, "inst4").name("Si el rey es eliminado, el juego termina. La ficha que mata al rey se moverá hacia arriba y abajo para indicar que ha ganado la partida.");
+    inst.add(effectController, "inst4").name("Si el rey es eliminado, el juego termina. La fichas del equipo ganador \"saltarán\".");
     inst.add(effectController, "inst5").name("Si la partida termina o se quiere reiniciar, pulsar el botón 'Volver a empezar'");
 
 }
