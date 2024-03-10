@@ -11,6 +11,8 @@ import * as THREE from "../lib/three.module.js";
 import { OrbitControls } from "../lib/OrbitControls.module.js";
 import { TWEEN } from "../lib/tween.module.min.js";
 import { GUI } from "../lib/lil-gui.module.min.js";
+import Ficha from "./fichas.js";
+
 
 // Variables de consenso
 let renderer, scene, camera, focal;
@@ -60,7 +62,7 @@ function init() {
 
     // Escena
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0.5, 0.5, 0.5);
+    scene.background = new THREE.Color(1, 1, 1);
 
     // Camara
     camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -129,11 +131,11 @@ function loadScene() {
     casillasPosibles = [];
     casillasPosiblesKill = [];
     // Crear un material para el plano
-    var geometry = new THREE.PlaneGeometry(10000, 10000);
-    suelo = new THREE.Mesh(geometry, sueloMaterial);
-    suelo.rotation.x = -Math.PI / 2;
-    suelo.position.y = -1.05;
-    scene.add(suelo);
+    // var geometry = new THREE.PlaneGeometry(10000, 10000);
+    // suelo = new THREE.Mesh(geometry, sueloMaterial);
+    // suelo.rotation.x = -Math.PI / 2;
+    // suelo.position.y = -1.05;
+    // scene.add(suelo);
 
     // Luces
     const ambiental = new THREE.AmbientLight(0x222222);
@@ -158,15 +160,34 @@ function loadScene() {
 
     // scene.add(new THREE.CameraHelper(focal.shadow.camera));
 
-    // Cargar la textura del gradiente
+    // // Cargar la textura del gradiente
     const textureLoader = new THREE.TextureLoader();
-    const gradientTexture = textureLoader.load('entregas/scene_e1/floor.jpg');
+    const gradientTexture = textureLoader.load('entregas/scene_e1/gradient_floor.png');
     const gradientMaterial = new THREE.MeshBasicMaterial({ map: gradientTexture });
-    const gradientGeometry = new THREE.PlaneGeometry(10, 10);
-    const gradientMesh = new THREE.Mesh(gradientGeometry, gradientMaterial);
-    gradientMesh.rotation.x = Math.PI * -0.5;
-    gradientMesh.position.y = -1;
-    scene.add(gradientMesh);
+    const gradientGeometry = new THREE.PlaneGeometry(25, 25);
+    suelo = new THREE.Mesh(gradientGeometry, gradientMaterial);
+    suelo.rotation.x = Math.PI * -0.5;
+    suelo.position.y = -1;
+    scene.add(suelo);
+
+    //bordes del suelo
+    let initialColor = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const geoBorde1 = new THREE.BoxGeometry(25, 0.1, 0.1);
+    const borde1 = new THREE.Mesh(geoBorde1, initialColor);
+    borde1.position.y = -1;
+    borde1.position.z = 12.5;
+    borde1.position.x = 0;
+    scene.add(borde1);
+
+    const geoBorde2 = new THREE.BoxGeometry(25, 0.1, 0.1);
+    const borde2 = new THREE.Mesh(geoBorde2, initialColor);
+    borde2.position.y = -1;
+    borde2.position.z = 0;
+    borde2.position.x = 12.5;
+    borde2.rotation.y = Math.PI / 2;
+    scene.add(borde2);
+
+
 
     const textureLoader2 = new THREE.TextureLoader();
     const gradientTexture2 = textureLoader2.load('entregas/scene_e1/concrete.jpg');
@@ -178,11 +199,11 @@ function loadScene() {
     let materialWhite = new THREE.MeshPhongMaterial({ color: 'white', specular: '#f0f0f0', shininess: brilloCasillas });
     let materialBlack = new THREE.MeshPhongMaterial({ color: 'black', specular: '#f0f0f0', shininess: brilloCasillas });
 
-    const loader = new THREE.CubeTextureLoader();
-    const cubemap = loader.load(["entregas/scene_e1/posx.jpg", "entregas/scene_e1/negx.jpg",
-        "entregas/scene_e1/posy.jpg", "entregas/scene_e1/negy.jpg",
-        "entregas/scene_e1/posz.jpg", "entregas/scene_e1/negz.jpg"]);
-    scene.background = cubemap;
+    // const loader = new THREE.CubeTextureLoader();
+    // const cubemap = loader.load(["entregas/scene_e1/posx.jpg", "entregas/scene_e1/negx.jpg",
+    //     "entregas/scene_e1/posy.jpg", "entregas/scene_e1/negy.jpg",
+    //     "entregas/scene_e1/posz.jpg", "entregas/scene_e1/negz.jpg"]);
+    // scene.background = cubemap;
 
     const mesa = loadMesa(material);
     const tablero = loadTablero(material, materialWhite, materialBlack);
@@ -329,306 +350,42 @@ function loadBordes(material, initialColor) {
     return bordes;
 }
 
-function loadPeon(material, posX, posY) {
-    const peon = new THREE.Object3D();
-    peon.position.x = -(posX * 0.425)
-    peon.position.z = -(posY * 0.425)
-
-    const geoBase = new THREE.CylinderGeometry(0.08, 0.2, 0.1)
-    const base = new THREE.Mesh(geoBase, material);
-    base.position.x = 1.487
-    base.position.z = 1.487
-    base.position.y = 3.3
-    peon.add(base);
-
-    const geoBody = new THREE.CapsuleGeometry(0.08, 0.3, 0.5)
-    const body = new THREE.Mesh(geoBody, material);
-    body.position.x = 1.487
-    body.position.z = 1.487
-    body.position.y = 3.3
-    peon.add(body);
-
-    const geoBaseTop = new THREE.CylinderGeometry(0.1, 0.1, 0.03)
-    const baseTop = new THREE.Mesh(geoBaseTop, material);
-    baseTop.position.x = 1.487
-    baseTop.position.z = 1.487
-    baseTop.position.y = 3.52
-    peon.add(baseTop);
-
-    const geoTop = new THREE.SphereGeometry(0.08, 50, 50)
-    const top = new THREE.Mesh(geoTop, material);
-    top.position.x = 1.487
-    top.position.z = 1.487
-    top.position.y = 3.6
-    peon.add(top);
-
-    return peon
-}
-
-function loadAlfil(material, posX, posY) {
-    const alfil = new THREE.Object3D();
-    alfil.position.x = -(posX * 0.425)
-    alfil.position.z = -(posY * 0.425)
-
-    const geoBase = new THREE.CylinderGeometry(0.08, 0.2, 0.1)
-    const base = new THREE.Mesh(geoBase, material);
-    base.position.x = 1.487
-    base.position.z = 1.487
-    base.position.y = 3.3
-    alfil.add(base);
-
-    const geoBody = new THREE.CapsuleGeometry(0.08, 0.7, 0.5)
-    const body = new THREE.Mesh(geoBody, material);
-    body.position.x = 1.487
-    body.position.z = 1.487
-    body.position.y = 3.3
-    alfil.add(body);
-
-    const geoBaseTop = new THREE.CylinderGeometry(0.1, 0.1, 0.03)
-    const baseTop = new THREE.Mesh(geoBaseTop, material);
-    baseTop.position.x = 1.487
-    baseTop.position.z = 1.487
-    baseTop.position.y = 3.7
-    alfil.add(baseTop);
-
-    const geoTop = new THREE.SphereGeometry(0.07, 20, 50)
-    const top = new THREE.Mesh(geoTop, material);
-    top.position.x = 1.487
-    top.position.z = 1.487
-    top.position.y = 3.78
-    alfil.add(top);
-
-    const geoTop2 = new THREE.CapsuleGeometry(0.08, 0.1, 0.5)
-    const top2 = new THREE.Mesh(geoTop2, material);
-    top2.position.x = 1.487
-    top2.position.z = 1.487
-    top2.position.y = 3.77
-    alfil.add(top2);
-
-    return alfil
-}
-
-function loadTower(material, posX, posY) {
-    const tower = new THREE.Object3D();
-    tower.position.x = -(posX * 0.425)
-    tower.position.z = -(posY * 0.425)
-
-    const geoBase = new THREE.CylinderGeometry(0.08, 0.2, 0.1)
-    const base = new THREE.Mesh(geoBase, material);
-    base.position.x = 1.487
-    base.position.z = 1.487
-    base.position.y = 3.3
-    tower.add(base);
-
-    const geoBody = new THREE.CapsuleGeometry(0.08, 0.5, 0.5)
-    const body = new THREE.Mesh(geoBody, material);
-    body.position.x = 1.487
-    body.position.z = 1.487
-    body.position.y = 3.3
-    tower.add(body);
-
-    const geoBaseTop = new THREE.CylinderGeometry(0.1, 0.1, 0.05)
-    const baseTop = new THREE.Mesh(geoBaseTop, material);
-    baseTop.position.x = 1.487
-    baseTop.position.z = 1.487
-    baseTop.position.y = 3.61
-    tower.add(baseTop);
-
-    const geoTabla = new THREE.BoxGeometry(0.06, 0.05, 0.03)
-    for (let i = 0; i < 5; i++) {
-        const cube = new THREE.Mesh(geoTabla, material);
-        const angle = (i / 5) * Math.PI * 2;
-        cube.position.set(Math.cos(angle) * 0.085, 0.05, Math.sin(angle) * 0.085);
-        cube.lookAt(new THREE.Vector3(0, 0.05, 0));
-        baseTop.add(cube);
-    }
-
-    const geoRing = new THREE.TorusGeometry(0.086, 0.02);
-    const ring = new THREE.Mesh(geoRing, material);
-    ring.rotation.x = Math.PI / 2;
-    ring.position.y = 0.03
-    baseTop.add(ring)
-
-    return tower
-}
-
-function loadReina(material, posX, posY) {
-    const reina = new THREE.Object3D();
-    reina.position.x = -(posX * 0.425)
-    reina.position.z = -(posY * 0.425)
-
-    const geoBase = new THREE.CylinderGeometry(0.08, 0.2, 0.1)
-    const base = new THREE.Mesh(geoBase, material);
-    base.position.x = 1.487
-    base.position.z = 1.487
-    base.position.y = 3.3
-    reina.add(base);
-
-    const geoBody = new THREE.CapsuleGeometry(0.08, 0.7, 0.5)
-    const body = new THREE.Mesh(geoBody, material);
-    body.position.x = 1.487
-    body.position.z = 1.487
-    body.position.y = 3.4
-    reina.add(body);
-
-    const geoBaseTop = new THREE.CylinderGeometry(0.1, 0.1, 0.03)
-    const baseTop = new THREE.Mesh(geoBaseTop, material);
-    baseTop.position.x = 1.487
-    baseTop.position.z = 1.487
-    baseTop.position.y = 3.8
-    reina.add(baseTop);
-
-    const geoCorona = new THREE.CylinderGeometry(0.09, 0.07, 0.1)
-    const corona = new THREE.Mesh(geoCorona, material);
-    corona.position.x = 1.487
-    corona.position.z = 1.487
-    corona.position.y = 3.85
-    reina.add(corona);
-
-    const geoTop = new THREE.SphereGeometry(0.05, 10, 10)
-    const top = new THREE.Mesh(geoTop, material);
-    top.position.x = 1.487
-    top.position.z = 1.487
-    top.position.y = 3.9
-    reina.add(top);
-
-    return reina
-}
-
-function loadRey(material, posX, posY) {
-    const rey = new THREE.Object3D();
-    rey.position.x = -(posX * 0.425)
-    rey.position.z = -(posY * 0.425)
-
-    const geoBase = new THREE.CylinderGeometry(0.08, 0.2, 0.1)
-    const base = new THREE.Mesh(geoBase, material);
-    base.position.x = 1.487
-    base.position.z = 1.487
-    base.position.y = 3.3
-    rey.add(base);
-
-    const geoBody = new THREE.CapsuleGeometry(0.08, 0.7, 0.5)
-    const body = new THREE.Mesh(geoBody, material);
-    body.position.x = 1.487
-    body.position.z = 1.487
-    body.position.y = 3.4
-    rey.add(body);
-
-    const geoBaseTop = new THREE.CylinderGeometry(0.1, 0.1, 0.03)
-    const baseTop = new THREE.Mesh(geoBaseTop, material);
-    baseTop.position.x = 1.487
-    baseTop.position.z = 1.487
-    baseTop.position.y = 3.8
-    rey.add(baseTop);
-
-    const geoCorona = new THREE.CylinderGeometry(0.09, 0.07, 0.1)
-    const corona = new THREE.Mesh(geoCorona, material);
-    corona.position.x = 1.487
-    corona.position.z = 1.487
-    corona.position.y = 3.85
-    rey.add(corona);
-
-    const geoTop1 = new THREE.BoxGeometry(0.05, 0.15, 0.05)
-    const top1 = new THREE.Mesh(geoTop1, material);
-    top1.position.x = 1.487
-    top1.position.z = 1.487
-    top1.position.y = 3.97
-    rey.add(top1);
-
-    const geoTop2 = new THREE.BoxGeometry(0.05, 0.05, 0.15)
-    const top2 = new THREE.Mesh(geoTop2, material);
-    top2.position.x = 1.487
-    top2.position.z = 1.487
-    top2.position.y = 3.98
-    rey.add(top2);
-
-    return rey
-}
-
-function loadCaballo(material, posX, posY, north) {
-    let x = north ? 1.53 : 1.45;
-    const caballo = new THREE.Object3D();
-    caballo.position.x = -(posX * 0.425)
-    caballo.position.z = -(posY * 0.425)
-
-    const geoBase = new THREE.CylinderGeometry(0.08, 0.2, 0.1)
-    const base = new THREE.Mesh(geoBase, material);
-    base.position.x = 1.487
-    base.position.z = 1.487
-    base.position.y = 3.3
-    caballo.add(base);
-
-    const geoBody = new THREE.CapsuleGeometry(0.08, 0.3, 0.5)
-    const body = new THREE.Mesh(geoBody, material);
-    body.position.x = x
-    body.position.z = 1.487
-    body.position.y = 3.45
-    body.rotation.z = north ? Math.PI / -8 : Math.PI / 8;
-    caballo.add(body);
-
-    const geoHead = new THREE.CapsuleGeometry(0.06, 0.2, 0.3)
-    const head = new THREE.Mesh(geoHead, material);
-    head.position.x = x
-    head.position.z = 1.487
-    head.position.y = 3.58
-    head.rotation.z = north ? Math.PI / -2.3 : Math.PI / 2.3;
-    caballo.add(head);
-
-    const geoEar1 = new THREE.CapsuleGeometry(0.02, 0.4, 0.6)
-    const ear1 = new THREE.Mesh(geoEar1, material);
-    ear1.position.x = x
-    ear1.position.z = 1.447
-    ear1.position.y = 3.46
-    ear1.rotation.z = north ? Math.PI / -8 : Math.PI / 8;
-    caballo.add(ear1);
-
-    const geoEar2 = new THREE.CapsuleGeometry(0.02, 0.4, 0.6)
-    const ear2 = new THREE.Mesh(geoEar2, material);
-    ear2.position.x = x
-    ear2.position.z = 1.533
-    ear2.position.y = 3.46
-    ear2.rotation.z = north ? Math.PI / -8 : Math.PI / 8;
-    caballo.add(ear2);
-
-    return caballo;
-}
-
 function loadWhite() {
     let white = new THREE.MeshPhongMaterial({ color: 'white', specular: '#f0f0f0', shininess: brilloFichas });
 
     let list = [];
     for (let i = 0; i < 8; i++) {
-        let peon = loadPeon(white, 1, i)
+        let peon = Ficha.loadPeon(white, 1, i)
         peon.name = whiteNames[i]
         list.push(peon)
     }
 
-    let alfil1 = loadAlfil(white, 0, 2)
+    let alfil1 = Ficha.loadAlfil(white, 0, 2)
     alfil1.name = whiteNames[8]
-    let alfil2 = loadAlfil(white, 0, 5)
+    let alfil2 = Ficha.loadAlfil(white, 0, 5)
     alfil2.name = whiteNames[9]
     list.push(alfil1)
     list.push(alfil2)
 
-    let tower1 = loadTower(white, 0, 0)
+    let tower1 = Ficha.loadTower(white, 0, 0)
     tower1.name = whiteNames[10]
-    let tower2 = loadTower(white, 0, 7)
+    let tower2 = Ficha.loadTower(white, 0, 7)
     tower2.name = whiteNames[11]
     list.push(tower1)
     list.push(tower2)
 
-    let caballo1 = loadCaballo(white, 0, 1, true);
+    let caballo1 = Ficha.loadCaballo(white, 0, 1, true);
     caballo1.name = whiteNames[12]
-    let caballo2 = loadCaballo(white, 0, 6, true);
+    let caballo2 = Ficha.loadCaballo(white, 0, 6, true);
     caballo2.name = whiteNames[13]
     list.push(caballo1)
     list.push(caballo2)
 
-    let reina = loadReina(white, 0, 4)
+    let reina = Ficha.loadReina(white, 0, 4)
     reina.name = whiteNames[14]
     list.push(reina)
 
-    let rey = loadRey(white, 0, 3)
+    let rey = Ficha.loadRey(white, 0, 3)
     rey.name = whiteNames[15]
     list.push(rey)
 
@@ -640,37 +397,37 @@ function loadBlack() {
 
     let list = [];
     for (let i = 0; i < 8; i++) {
-        let peon = loadPeon(black, 6, i)
+        let peon = Ficha.loadPeon(black, 6, i)
         peon.name = blackNames[i]
         list.push(peon)
     }
 
-    let alfil1 = loadAlfil(black, 7, 2)
+    let alfil1 = Ficha.loadAlfil(black, 7, 2)
     alfil1.name = blackNames[8]
-    let alfil2 = loadAlfil(black, 7, 5)
+    let alfil2 = Ficha.loadAlfil(black, 7, 5)
     alfil2.name = blackNames[9]
     list.push(alfil1)
     list.push(alfil2)
 
-    let tower1 = loadTower(black, 7, 0)
+    let tower1 = Ficha.loadTower(black, 7, 0)
     tower1.name = blackNames[10]
-    let tower2 = loadTower(black, 7, 7)
+    let tower2 = Ficha.loadTower(black, 7, 7)
     tower2.name = blackNames[11]
     list.push(tower1)
     list.push(tower2)
 
-    let caballo1 = loadCaballo(black, 7, 1, false);
+    let caballo1 = Ficha.loadCaballo(black, 7, 1, false);
     caballo1.name = blackNames[12]
-    let caballo2 = loadCaballo(black, 7, 6, false);
+    let caballo2 = Ficha.loadCaballo(black, 7, 6, false);
     caballo2.name = blackNames[13]
     list.push(caballo1)
     list.push(caballo2)
 
-    let reina = loadReina(black, 7, 4)
+    let reina = Ficha.loadReina(black, 7, 4)
     reina.name = blackNames[14]
     list.push(reina)
 
-    let rey = loadRey(black, 7, 3)
+    let rey = Ficha.loadRey(black, 7, 3)
     rey.name = blackNames[15]
     list.push(rey)
 
@@ -707,7 +464,7 @@ function animate(event) {
                 selectFicha({ name: '' })
                 //obtener ficha que se encuentra en la posición de la casilla
                 let fichaEliminar = scene.children.find((f) => f.position.x == casilla.position.x && f.position.z == casilla.position.z);
-
+                let ficha = fichaSeleccionada;
                 new TWEEN.Tween(fichaSeleccionada.position)
                     .to({ x: casilla.position.x, z: casilla.position.z }, 1000)
                     .easing(TWEEN.Easing.Quadratic.InOut)
@@ -736,7 +493,7 @@ function animate(event) {
                     scene.children = scene.children.filter((f) => f.name != fichaEliminar.name);
                     whiteNames = whiteNames.filter((f) => f != fichaEliminar.name);
                     blackNames = blackNames.filter((f) => f != fichaEliminar.name);
-                    updateWinner();
+                    updateWinner(ficha);
                     updateTurno();
                 }, 3500);
             }
@@ -1282,19 +1039,35 @@ function updateTurno() {
         turno++;
         scene.getObjectByName('bordes').children.forEach((e) => {
             e.material = new THREE.MeshPhongMaterial({ color: turno % 2 ? 'black' : 'white', specular: '#f0f0f0', shininess: brilloFichas });
-        }
-        );
+        });
     }
 }
 
-function updateWinner() {
+function updateWinner(ficha) {
+    let initialPos = { x: ficha.position.x, z: ficha.position.z, y: ficha.position.y };
     if (!whiteNames.find((name) => name.includes('rey'))) {
         winner = 'b';
-        suelo.material = new THREE.MeshStandardMaterial({ color: 'black', roughness: 0.7 });
+        setInterval(() => {
+            new TWEEN.Tween(ficha.position).
+                to({ y: [initialPos.y + 0.1, initialPos.y] }, 1000).
+                interpolation(TWEEN.Interpolation.Bezier).
+                easing(TWEEN.Easing.Quadratic.InOut).
+                start();
+        }
+            , 1000);
     } else if (!blackNames.find((name) => name.includes('rey'))) {
         winner = 'w';
-        suelo.material = new THREE.MeshStandardMaterial({ color: 'white', roughness: 0.7 });
+        setInterval(() => {
+            new TWEEN.Tween(ficha.position).
+                to({ y: [initialPos.y + 0.1, initialPos.y] }, 1000).
+                interpolation(TWEEN.Interpolation.Bezier).
+                easing(TWEEN.Easing.Quadratic.InOut).
+                start();
+        }
+            , 1000);
     }
+
+
 }
 
 function loadGUI() {
@@ -1312,24 +1085,31 @@ function loadGUI() {
         inst2: false,
         inst3: false,
         inst4: false,
-        inst5: false
+        inst5: false,
+        indi1: false,
+        indi2: false,
+        indi3: false,
     };
 
     // Creacion interfaz
     const gui = new GUI();
 
     // Construccion del menu
-    const h = gui.addFolder("Control vistas");
+    const h = gui.addFolder("Controles del juego");
     h.add(effectController, "vistaBlancas").name("Vista blancas");
     h.add(effectController, "vistaNegras").name("Vsita negras");
     h.add(effectController, "restart").name("Volver a empezar");
 
-    // let instrucciones = h.addFolder("Instrucciones de uso");
+    const indi = gui.addFolder("Indicadores del juego")
+    indi.add(effectController, "indi1").name("El borde del tablero indicará el color del turno en que nos encontramos. Si es blanco, es el turo de las fichas blancas.");
+    indi.add(effectController, "indi2").name("Al seleccionar una ficha, está se volverá de color ROJO para indicar que la hemos seleccionado correctamente.");
+    indi.add(effectController, "inst3").name("Las casillas a las que podremos movernos se resaltarán de ROJO, en caso de ser un movimiento posible o en MORADO, en caso de poder matar una ficha enemiga");
+
     const inst = gui.addFolder("Instrucciones de uso")
     inst.add(effectController, "inst1").name("Click en una ficha para seleccionarla y ver sus posibles movimientos");
     inst.add(effectController, "inst2").name("Doble click en una casilla resaltada para mover la ficha seleccionada");
     inst.add(effectController, "inst3").name("Si hay una ficha enemiga al alcance, se marcará de color morado y se podrá eliminar");
-    inst.add(effectController, "inst4").name("Si el rey es eliminado, el juego termina. La escena se volverá del color del ganador");
+    inst.add(effectController, "inst4").name("Si el rey es eliminado, el juego termina. La ficha que mata al rey se moverá hacia arriba y abajo para indicar que ha ganado la partida.");
     inst.add(effectController, "inst5").name("Si la partida termina o se quiere reiniciar, pulsar el botón 'Volver a empezar'");
 
 }
