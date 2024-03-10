@@ -73,48 +73,6 @@ function init() {
 
     renderer.domElement.addEventListener('dblclick', animate);
     renderer.domElement.addEventListener('click', selectPosition);
-    //detectar una pulsación larga de raton
-    // Inicializar temporizador
-    var timer;
-
-    // Variables para controlar la pulsación prolongada
-    var isMouseDown = false;
-    var isLongPress = false;
-
-    // Función para iniciar el temporizador
-    function startTimer(event) {
-        timer = setTimeout(function () {
-            isLongPress = true;
-            console.log('Pulsación prolongada detectada');
-            animate(event)
-        }, 1000); // 1000 milisegundos = 1 segundo
-    }
-
-    // Función para detener el temporizador
-    function stopTimer() {
-        clearTimeout(timer); // Limpiar el temporizador
-        isLongPress = false;
-    }
-
-    // Evento de mousedown
-    document.addEventListener('mousedown', function (event) {
-        isMouseDown = true;
-        startTimer(event); // Iniciar el temporizador cuando se presiona el botón del mouse
-    });
-
-    // Evento de mouseup
-    document.addEventListener('mouseup', function (event) {
-        isMouseDown = false;
-        stopTimer(); // Detener el temporizador cuando se suelta el botón del mouse
-    });
-
-    // Evento de mousemove
-    document.addEventListener('mousemove', function (event) {
-        if (isMouseDown && !isLongPress) {
-            stopTimer(); // Reiniciar el temporizador si el mouse se mueve antes de la pulsación prolongada
-            startTimer();
-        }
-    });
 }
 
 function mirarBlancas() {
