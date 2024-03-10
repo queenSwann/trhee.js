@@ -36,7 +36,6 @@ let winner = '';
 let turno = 0;
 
 let suelo;
-var sueloMaterial = new THREE.MeshBasicMaterial({ color: 0x2a382a });
 
 const ultimaCasilla = -2.975;
 const primeraCasilla = -0;
